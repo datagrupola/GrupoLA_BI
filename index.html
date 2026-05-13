@@ -4,103 +4,68 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Grupo LA | BI Command Center</title>
-  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="styles.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="app-shell">
     <!-- SIDEBAR -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="brand-logo">LA</div>
         <div class="brand-info">
           <strong>BI Center</strong>
-          <span>Grupo LA</span>
         </div>
+        <button class="toggle-btn" onclick="toggleSidebar()" aria-label="Alternar menú">☰</button>
       </div>
 
       <nav class="sidebar-nav">
         <div class="nav-group">
           <small>MONITOREO DIRECTIVO</small>
           <button class="nav-btn active" onclick="switchView('larousse')">
-            <span class="dot lr"></span> La Rousse
+            <span class="dot lr"></span> <span>La Rousse</span>
           </button>
           <button class="nav-btn" onclick="switchView('chino')">
-            <span class="dot cr"></span> Chino Regalado
+            <span class="dot cr"></span> <span>Chino Regalado</span>
           </button>
         </div>
 
         <div class="nav-group">
           <small>OPERACIÓN RÁPIDA</small>
-          <a href="URL_APPSHEET_LA_ROUSSE" target="_blank" class="nav-link">AppSheet La Rousse ↗</a>
-          <a href="URL_APPSHEET_CHINO_REGALADO" target="_blank" class="nav-link">AppSheet Chino ↗</a>
-          <a href="#documentacion" class="nav-link">Documentación</a>
+          <a href="URL_APPSHEET_LA_ROUSSE" target="_blank" class="nav-link">
+            <span class="nav-icon">📱</span> <span>AppSheet LR</span>
+          </a>
+          <a href="URL_APPSHEET_CHINO_REGALADO" target="_blank" class="nav-link">
+            <span class="nav-icon">📱</span> <span>AppSheet CR</span>
+          </a>
+          <a href="#documentacion" class="nav-link">
+            <span class="nav-icon">📄</span> <span>Documentación</span>
+          </a>
         </div>
       </nav>
 
       <div class="sidebar-footer">
         <div class="status-indicator">
           <span class="pulse-icon"></span>
-          Ecosistema Activo
+          <span>Ecosistema Activo</span>
         </div>
       </div>
     </aside>
 
     <!-- MAIN CONTENT -->
     <main class="main-content">
-      <header class="content-header">
-        <div>
-          <h1 id="view-title">Dashboard Dirección: La Rousse</h1>
-          <p id="view-desc">Indicadores de venta, metas y cumplimiento por sucursal.</p>
-        </div>
-        <div class="header-actions">
-          <a id="external-link" href="https://datastudio.google.com/reporting/055e6005-5133-498d-8a93-4960dbc60f1b" target="_blank" class="btn-secondary">
-            Abrir en Looker Studio ↗
-          </a>
-        </div>
-      </header>
+      <div class="floating-actions">
+        <a id="external-link" href="https://datastudio.google.com/reporting/055e6005-5133-498d-8a93-4960dbc60f1b" target="_blank" class="btn-minimal" title="Abrir en Looker Studio">↗</a>
+      </div>
 
-      <!-- DASHBOARD CONTAINER (EL REY) -->
       <section class="dashboard-viewport">
         <div class="iframe-container">
-          <iframe 
-            id="main-frame"
-            src="https://datastudio.google.com/embed/reporting/055e6005-5133-498d-8a93-4960dbc60f1b/page/aSIvF" 
-            frameborder="0" 
-            allowfullscreen>
-          </iframe>
+          <iframe id="main-frame" src="https://datastudio.google.com/embed/reporting/055e6005-5133-498d-8a93-4960dbc60f1b/page/aSIvF" frameborder="0" allowfullscreen></iframe>
         </div>
       </section>
     </main>
   </div>
 
-  <script>
-    const views = {
-      larousse: {
-        title: "Dashboard Dirección: La Rousse",
-        desc: "Indicadores de venta, metas y cumplimiento por sucursal.",
-        src: "https://datastudio.google.com/embed/reporting/055e6005-5133-498d-8a93-4960dbc60f1b/page/aSIvF",
-        link: "https://datastudio.google.com/reporting/055e6005-5133-498d-8a93-4960dbc60f1b"
-      },
-      chino: {
-        title: "Dashboard Dirección: Chino Regalado",
-        desc: "Análisis operativo de novedades y ventas retail.",
-        src: "https://datastudio.google.com/embed/reporting/b3a1b8a4-311e-4d54-acc3-c6d323a8ba19/page/p_638aevo82d",
-        link: "https://datastudio.google.com/reporting/b3a1b8a4-311e-4d54-acc3-c6d323a8ba19"
-      }
-    };
-
-    function switchView(viewKey) {
-      const data = views[viewKey];
-      document.getElementById('main-frame').src = data.src;
-      document.getElementById('view-title').innerText = data.title;
-      document.getElementById('view-desc').innerText = data.desc;
-      document.getElementById('external-link').href = data.link;
-
-      // Actualizar estados visuales de los botones
-      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-      event.currentTarget.classList.add('active');
-    }
-  </script>
+  <script src="scripts.js"></script>
 </body>
 </html>

@@ -1,153 +1,127 @@
 /* RESET & BASE */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-    --sidebar-width: 280px;
+    --sidebar-width: 260px;
+    --sidebar-collapsed: 80px;
     --bg-dark: #0f172a;
-    --bg-main: #f1f5f9;
     --primary: #2563eb;
-    --text-light: #f8fafc;
     --text-muted: #94a3b8;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-body, html {
-    height: 100%;
-    font-family: 'Inter', system-ui, sans-serif;
-    background-color: var(--bg-main);
-    overflow: hidden; /* Evita scrolls innecesarios en la ventana principal */
+body, html { 
+    height: 100%; 
+    font-family: 'Inter', sans-serif; 
+    overflow: hidden; 
+    background: var(--bg-dark); 
 }
 
-/* LAYOUT PRINCIPAL */
-.app-shell {
-    display: flex;
-    width: 100vw;
-    height: 100vh;
-}
+.app-shell { display: flex; width: 100vw; height: 100vh; }
 
-/* SIDEBAR (Izquierda) */
+/* SIDEBAR CORE */
 .sidebar {
     width: var(--sidebar-width);
-    background-color: var(--bg-dark);
+    background: var(--bg-dark);
     color: white;
     display: flex;
     flex-direction: column;
-    flex-shrink: 0; /* Evita que el sidebar se encoja */
-    padding: 2rem 1.5rem;
-    z-index: 10;
+    padding: 1.5rem 1rem;
+    transition: var(--transition);
+    overflow: hidden;
+    flex-shrink: 0;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+/* ESTADO COLAPSADO */
+.sidebar.collapsed { 
+    width: var(--sidebar-collapsed); 
+}
+
+/* HEADER DEL SIDEBAR */
 .sidebar-header {
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: space-between;
     margin-bottom: 3rem;
+    min-height: 40px;
+    width: 100%;
 }
 
-.brand-logo {
-    background: var(--primary);
-    padding: 8px 12px;
-    border-radius: 8px;
+.brand-logo { 
+    background: var(--primary); 
+    padding: 8px 12px; 
+    border-radius: 8px; 
     font-weight: 800;
-    font-size: 1.2rem;
+    flex-shrink: 0;
 }
 
-.brand-info strong { display: block; font-size: 1.1rem; }
-.brand-info span { font-size: 0.8rem; color: var(--text-muted); }
+.brand-info { transition: opacity 0.2s; }
+
+/* EL BOTÓN MÁGICO */
+.toggle-btn {
+    background: rgba(255,255,255,0.05);
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 8px;
+    border-radius: 6px;
+    transition: var(--transition);
+}
+
+.toggle-btn:hover { background: rgba(255,255,255,0.1); }
+
+/* AJUSTES AL COLAPSAR */
+.sidebar.collapsed .brand-info,
+.sidebar.collapsed .nav-group small,
+.sidebar.collapsed .nav-btn span:not(.dot),
+.sidebar.collapsed .nav-link span,
+.sidebar.collapsed .status-indicator span {
+    display: none;
+}
+
+.sidebar.collapsed .sidebar-header {
+    justify-content: center;
+}
+
+.sidebar.collapsed .brand-logo {
+    display: none; /* Ocultamos logo para dar espacio al botón toggle */
+}
 
 /* NAVEGACIÓN */
 .nav-group { margin-bottom: 2.5rem; }
 .nav-group small { 
     color: var(--text-muted); 
-    font-size: 0.7rem; 
+    font-size: 0.65rem; 
     text-transform: uppercase; 
-    letter-spacing: 1.5px;
-    display: block;
     margin-bottom: 1rem;
+    display: block;
 }
 
 .nav-btn, .nav-link {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    padding: 0.75rem 1rem;
-    color: var(--text-muted);
-    text-decoration: none;
-    background: transparent;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 0.95rem;
-    transition: all 0.2s ease;
-    margin-bottom: 0.5rem;
+    display: flex; align-items: center; width: 100%; padding: 0.8rem;
+    color: var(--text-muted); text-decoration: none; background: transparent;
+    border: none; border-radius: 8px; cursor: pointer; font-size: 0.9rem; margin-bottom: 0.4rem;
+    transition: var(--transition);
 }
 
-.nav-btn:hover, .nav-btn.active {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
+.nav-btn.active { background: rgba(37, 99, 235, 0.2); color: white; }
+
+.dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.sidebar:not(.collapsed) .dot { margin-right: 12px; }
+.sidebar.collapsed .dot { margin: 0 auto; } /* Centra los puntos en modo colapsado */
+
+.lr { background: #ec4899; }
+.cr { background: #06b6d4; }
+
+/* MAIN CONTENT */
+.main-content { flex-grow: 1; position: relative; background: white; }
+.floating-actions { position: absolute; top: 15px; right: 20px; z-index: 100; }
+.btn-minimal {
+    width: 38px; height: 38px; background: rgba(255,255,255,0.8); backdrop-filter: blur(8px);
+    border: 1px solid #e2e8f0; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; text-decoration: none; color: #1e293b; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
-
-.nav-btn.active { border-left: 4px solid var(--primary); border-radius: 0 8px 8px 0; }
-
-/* MAIN CONTENT (Derecha) */
-.main-content {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    min-width: 0; /* Fix para flexbox con contenidos anchos */
-}
-
-.content-header {
-    background: white;
-    padding: 1.5rem 2.5rem;
-    border-bottom: 1px solid #e2e8f0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.content-header h1 { font-size: 1.5rem; color: #1e293b; margin-bottom: 4px; }
-.content-header p { color: var(--text-muted); font-size: 0.9rem; }
-
-/* CONTENEDOR DEL DASHBOARD */
-.dashboard-viewport {
-    flex-grow: 1;
-    padding: 1.5rem;
-    display: flex;
-}
-
-.iframe-container {
-    background: white;
-    width: 100%;
-    height: 100%;
-    border-radius: 12px;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    position: relative;
-}
-
-#main-frame {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-/* BOTÓN DE ACCIÓN */
-.btn-secondary {
-    padding: 0.6rem 1.2rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    color: #334155;
-    text-decoration: none;
-    font-size: 0.85rem;
-    font-weight: 600;
-    transition: background 0.2s;
-}
-
-.btn-secondary:hover { background: #f8fafc; }
+.dashboard-viewport { width: 100%; height: 100vh; }
+.iframe-container, #main-frame { width: 100%; height: 100%; border: none; }
