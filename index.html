@@ -3,381 +3,104 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>Grupo LA BI Center</title>
-  <meta
-    name="description"
-    content="Portal ejecutivo de acceso a dashboards, aplicaciones y documentación del ecosistema BI de Grupo LA."
-  />
-
+  <title>Grupo LA | BI Command Center</title>
   <link rel="stylesheet" href="./styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
-
 <body>
-  <main class="page">
-    <!-- NAVBAR -->
-    <nav class="navbar">
-      <a class="brand" href="./index.html" aria-label="Inicio Grupo LA BI Center">
-        <div class="brand-mark">LA</div>
-
-        <div class="brand-text">
-          <strong>Grupo LA BI Center</strong>
-          <span>Portal ejecutivo de datos</span>
+  <div class="app-shell">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-logo">LA</div>
+        <div class="brand-info">
+          <strong>BI Center</strong>
+          <span>Grupo LA</span>
         </div>
-      </a>
-
-      <div class="nav-links">
-        <a class="nav-pill" href="#direccion">Dirección</a>
-        <a class="nav-pill" href="#ecosistemas">Ecosistemas</a>
-        <a class="nav-pill" href="#accesos">Accesos rápidos</a>
-        <a class="nav-pill" href="#documentacion">Documentación</a>
       </div>
-    </nav>
 
-    <!-- HERO -->
-    <section class="hero">
-      <div class="hero-copy">
-        <div class="eyebrow">
-          <span class="pulse"></span>
-          Ecosistema BI operativo
+      <nav class="sidebar-nav">
+        <div class="nav-group">
+          <small>MONITOREO DIRECTIVO</small>
+          <button class="nav-btn active" onclick="switchView('larousse')">
+            <span class="dot lr"></span> La Rousse
+          </button>
+          <button class="nav-btn" onclick="switchView('chino')">
+            <span class="dot cr"></span> Chino Regalado
+          </button>
         </div>
 
-        <h1>
-          Inteligencia comercial para
-          <span class="gradient-text">dirección y operación.</span>
-        </h1>
+        <div class="nav-group">
+          <small>OPERACIÓN RÁPIDA</small>
+          <a href="URL_APPSHEET_LA_ROUSSE" target="_blank" class="nav-link">AppSheet La Rousse ↗</a>
+          <a href="URL_APPSHEET_CHINO_REGALADO" target="_blank" class="nav-link">AppSheet Chino ↗</a>
+          <a href="#documentacion" class="nav-link">Documentación</a>
+        </div>
+      </nav>
 
-        <p>
-          Centro de acceso a dashboards, aplicaciones de captura, reportes ejecutivos
-          y herramientas internas de los ecosistemas de datos de Grupo LA.
-        </p>
+      <div class="sidebar-footer">
+        <div class="status-indicator">
+          <span class="pulse-icon"></span>
+          Ecosistema Activo
+        </div>
+      </div>
+    </aside>
 
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="#direccion">
-            Ver vista directiva
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <header class="content-header">
+        <div>
+          <h1 id="view-title">Dashboard Dirección: La Rousse</h1>
+          <p id="view-desc">Indicadores de venta, metas y cumplimiento por sucursal.</p>
+        </div>
+        <div class="header-actions">
+          <a id="external-link" href="https://datastudio.google.com/reporting/055e6005-5133-498d-8a93-4960dbc60f1b" target="_blank" class="btn-secondary">
+            Abrir en Looker Studio ↗
           </a>
-
-          <a class="btn btn-secondary" href="#ecosistemas">
-            Ver ecosistemas
-          </a>
         </div>
-      </div>
+      </header>
 
-      <aside class="hero-panel">
-        <div class="panel-header">
-          <div class="panel-title">Resumen del portal</div>
-          <div class="status">Activo</div>
+      <!-- DASHBOARD CONTAINER (EL REY) -->
+      <section class="dashboard-viewport">
+        <div class="iframe-container">
+          <iframe 
+            id="main-frame"
+            src="https://datastudio.google.com/embed/reporting/055e6005-5133-498d-8a93-4960dbc60f1b/page/aSIvF" 
+            frameborder="0" 
+            allowfullscreen>
+          </iframe>
         </div>
+      </section>
+    </main>
+  </div>
 
-        <div class="metric-grid">
-          <div class="metric">
-            <span>Marcas integradas</span>
-            <strong>2</strong>
-          </div>
+  <script>
+    const views = {
+      larousse: {
+        title: "Dashboard Dirección: La Rousse",
+        desc: "Indicadores de venta, metas y cumplimiento por sucursal.",
+        src: "https://datastudio.google.com/embed/reporting/055e6005-5133-498d-8a93-4960dbc60f1b/page/aSIvF",
+        link: "https://datastudio.google.com/reporting/055e6005-5133-498d-8a93-4960dbc60f1b"
+      },
+      chino: {
+        title: "Dashboard Dirección: Chino Regalado",
+        desc: "Análisis operativo de novedades y ventas retail.",
+        src: "https://datastudio.google.com/embed/reporting/b3a1b8a4-311e-4d54-acc3-c6d323a8ba19/page/p_638aevo82d",
+        link: "https://datastudio.google.com/reporting/b3a1b8a4-311e-4d54-acc3-c6d323a8ba19"
+      }
+    };
 
-          <div class="metric">
-            <span>Arquitectura</span>
-            <strong>App · DB · BI</strong>
-          </div>
+    function switchView(viewKey) {
+      const data = views[viewKey];
+      document.getElementById('main-frame').src = data.src;
+      document.getElementById('view-title').innerText = data.title;
+      document.getElementById('view-desc').innerText = data.desc;
+      document.getElementById('external-link').href = data.link;
 
-          <div class="metric">
-            <span>Visualización</span>
-            <strong>Looker Studio</strong>
-          </div>
-
-          <div class="metric">
-            <span>Captura</span>
-            <strong>AppSheet</strong>
-          </div>
-        </div>
-      </aside>
-    </section>
-
-    <!-- DASHBOARDS DIRECTIVOS -->
-    <section class="section" id="direccion">
-      <div class="section-header">
-        <div>
-          <h2>Vista directiva</h2>
-        </div>
-
-        <p>
-          Dashboards ejecutivos embebidos para seguimiento consolidado de ventas,
-          metas, cumplimiento y desempeño comercial.
-        </p>
-      </div>
-
-      <div class="dashboard-grid">
-        <!-- LA ROUSSE DIRECTIVO -->
-        <article class="dashboard-card">
-          <div class="dashboard-card-header">
-            <div>
-              <span>La Rousse</span>
-              <h3>Dashboard Dirección</h3>
-            </div>
-
-            <a
-              href="https://datastudio.google.com/reporting/055e6005-5133-498d-8a93-4960dbc60f1b"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Abrir en Looker ↗
-            </a>
-          </div>
-
-          <div class="dashboard-frame">
-            <iframe
-              src="https://datastudio.google.com/embed/reporting/055e6005-5133-498d-8a93-4960dbc60f1b/page/aSIvF"
-              title="Dashboard Dirección La Rousse"
-              width="100%"
-              height="720"
-              frameborder="0"
-              allowfullscreen>
-            </iframe>
-          </div>
-        </article>
-
-        <!-- CHINO REGALADO DIRECTIVO -->
-        <article class="dashboard-card">
-          <div class="dashboard-card-header">
-            <div>
-              <span>Chino Regalado</span>
-              <h3>Dashboard Dirección</h3>
-            </div>
-
-            <a
-              href="https://datastudio.google.com/reporting/b3a1b8a4-311e-4d54-acc3-c6d323a8ba19"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Abrir en Looker ↗
-            </a>
-          </div>
-
-          <div class="dashboard-frame">
-            <iframe
-              src="https://datastudio.google.com/embed/reporting/b3a1b8a4-311e-4d54-acc3-c6d323a8ba19/page/p_638aevo82d"
-              title="Dashboard Dirección Chino Regalado"
-              width="100%"
-              height="720"
-              frameborder="0"
-              allowfullscreen>
-            </iframe>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <!-- ECOSISTEMAS -->
-    <section class="section" id="ecosistemas">
-      <div class="section-header">
-        <div>
-          <h2>Ecosistemas de datos</h2>
-        </div>
-
-        <p>
-          Cada marca cuenta con su flujo de captura, base operativa,
-          base modelada para dashboards y visualización ejecutiva.
-        </p>
-      </div>
-
-      <div class="ecosystem-grid">
-        <!-- LA ROUSSE -->
-        <article
-          class="ecosystem-card"
-          style="--glow: radial-gradient(circle, #ec4899, transparent 62%);"
-        >
-          <div class="card-top">
-            <div class="logo-box">LR</div>
-            <div class="tag">Retail · Moda</div>
-          </div>
-
-          <h3>La Rousse</h3>
-
-          <p class="description">
-            Seguimiento de ventas por sucursal, metas, ranking de vendedores,
-            proyección de comisiones y reportes para dirección.
-          </p>
-
-          <div class="links-grid">
-            <a class="access-link" href="./larousse.html">
-              <div>
-                <strong>Abrir módulo La Rousse</strong><br />
-                <span>Dashboards por sucursal, AppSheet y documentación</span>
-              </div>
-              <strong>→</strong>
-            </a>
-
-            <a
-              class="access-link"
-              href="URL_LOOKER_LA_ROUSSE_DIRECCION"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div>
-                <strong>Dashboard Dirección</strong><br />
-                <span>Looker Studio general</span>
-              </div>
-              <strong>↗</strong>
-            </a>
-
-            <a
-              class="access-link"
-              href="URL_APPSHEET_LA_ROUSSE"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div>
-                <strong>AppSheet Captura</strong><br />
-                <span>Cortes diarios y operación</span>
-              </div>
-              <strong>↗</strong>
-            </a>
-          </div>
-        </article>
-
-        <!-- CHINO REGALADO -->
-        <article
-          class="ecosystem-card"
-          style="--glow: radial-gradient(circle, #06b6d4, transparent 62%);"
-        >
-          <div class="card-top">
-            <div class="logo-box">CR</div>
-            <div class="tag">Retail · Novedades</div>
-          </div>
-
-          <h3>Chino Regalado</h3>
-
-          <p class="description">
-            Ecosistema replicado con captura en AppSheet, base operativa,
-            base para dashboards y visualización ejecutiva por sucursal.
-          </p>
-
-          <div class="links-grid">
-            <a class="access-link" href="./chino-regalado.html">
-              <div>
-                <strong>Abrir módulo Chino Regalado</strong><br />
-                <span>Dashboards por sucursal, AppSheet y formularios</span>
-              </div>
-              <strong>→</strong>
-            </a>
-
-            <a
-              class="access-link"
-              href="URL_LOOKER_CHINO_REGALADO_DIRECCION"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div>
-                <strong>Dashboard Dirección</strong><br />
-                <span>Looker Studio general</span>
-              </div>
-              <strong>↗</strong>
-            </a>
-
-            <a
-              class="access-link"
-              href="URL_APPSHEET_CHINO_REGALADO"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div>
-                <strong>AppSheet Captura</strong><br />
-                <span>Cortes diarios y operación</span>
-              </div>
-              <strong>↗</strong>
-            </a>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <!-- ACCESOS RÁPIDOS -->
-    <section class="section" id="accesos">
-      <div class="section-header">
-        <div>
-          <h2>Accesos rápidos</h2>
-        </div>
-
-        <p>
-          Atajos para dirección, operación, documentación y herramientas internas.
-        </p>
-      </div>
-
-      <div class="quick-grid">
-        <a
-          class="quick-card"
-          href="URL_DASHBOARD_DIRECCION_GLOBAL"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <strong>Dirección General</strong>
-          <span>Vista ejecutiva consolidada de indicadores clave.</span>
-        </a>
-
-        <a
-          class="quick-card"
-          href="URL_CARPETA_LOOKER_STUDIO"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <strong>Dashboards</strong>
-          <span>Carpeta o índice con reportes de Looker Studio.</span>
-        </a>
-
-        <a
-          class="quick-card"
-          href="URL_CARPETA_DOCUMENTACION"
-          target="_blank"
-          rel="noopener noreferrer"
-          id="documentacion"
-        >
-          <strong>Documentación</strong>
-          <span>ERS, manuales, reglas operativas y reportes PDF.</span>
-        </a>
-
-        <a
-          class="quick-card"
-          href="URL_FORMULARIOS_INTERNOS"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <strong>Formularios</strong>
-          <span>Encuestas, insights y levantamientos operativos.</span>
-        </a>
-      </div>
-    </section>
-
-    <!-- NOTA OPERATIVA -->
-    <section class="section">
-      <div class="info-strip">
-        <div class="info-card">
-          <strong>Captura</strong>
-          <span>
-            Los datos operativos se registran desde AppSheet por los equipos autorizados.
-          </span>
-        </div>
-
-        <div class="info-card">
-          <strong>Modelado</strong>
-          <span>
-            Las bases de dashboard consolidan y preparan la información para análisis.
-          </span>
-        </div>
-
-        <div class="info-card">
-          <strong>Visualización</strong>
-          <span>
-            Looker Studio presenta indicadores ejecutivos, rankings y cumplimiento.
-          </span>
-        </div>
-      </div>
-    </section>
-
-    <!-- FOOTER -->
-    <footer class="footer">
-      <span>Grupo LA BI Center · Portal interno</span>
-      <span>AppSheet · Google Sheets · Looker Studio · GitHub Pages</span>
-    </footer>
-  </main>
+      // Actualizar estados visuales de los botones
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+    }
+  </script>
 </body>
 </html>
