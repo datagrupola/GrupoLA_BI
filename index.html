@@ -9,10 +9,11 @@
 </head>
 <body>
   <div class="app-shell">
-    <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <div class="brand-logo">LA</div>
+        <div class="brand-logo">
+          <img src="assets/LA_CLOTHES_Logotipo-04.png" alt="Logo LA" style="width: 40px; height: auto;">
+        </div>
         <div class="brand-info">
           <strong>BI Center</strong>
         </div>
@@ -28,16 +29,12 @@
           <button class="nav-btn" onclick="switchView('chino')">
             <span class="dot cr"></span> <span>Chino Regalado</span>
           </button>
+          <button class="nav-btn" onclick="switchView('pacas')">
+            <span class="dot pm"></span> <span>Pacas MX</span>
+          </button>
         </div>
-
+        
         <div class="nav-group">
-          <small>OPERACIÓN RÁPIDA</small>
-          <a href="URL_APPSHEET_LA_ROUSSE" target="_blank" class="nav-link">
-            <span class="nav-icon">📱</span> <span>AppSheet LR</span>
-          </a>
-          <a href="URL_APPSHEET_CHINO_REGALADO" target="_blank" class="nav-link">
-            <span class="nav-icon">📱</span> <span>AppSheet CR</span>
-          </a>
           <a href="#documentacion" class="nav-link">
             <span class="nav-icon">📄</span> <span>Documentación</span>
           </a>
@@ -52,7 +49,6 @@
       </div>
     </aside>
 
-    <!-- MAIN CONTENT -->
     <main class="main-content">
       <div class="floating-actions">
         <a id="external-link" href="https://datastudio.google.com/reporting/055e6005-5133-498d-8a93-4960dbc60f1b" target="_blank" class="btn-minimal" title="Abrir en Looker Studio">↗</a>

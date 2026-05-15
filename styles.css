@@ -49,7 +49,6 @@ body, html {
 }
 
 .brand-logo { 
-    background: var(--primary); 
     padding: 8px 12px; 
     border-radius: 8px; 
     font-weight: 800;
@@ -76,7 +75,7 @@ body, html {
 .sidebar.collapsed .brand-info,
 .sidebar.collapsed .nav-group small,
 .sidebar.collapsed .nav-btn span:not(.dot),
-.sidebar.collapsed .nav-link span,
+.sidebar.collapsed .nav-link span:not(.nav-icon),
 .sidebar.collapsed .status-indicator span {
     display: none;
 }
@@ -86,7 +85,7 @@ body, html {
 }
 
 .sidebar.collapsed .brand-logo {
-    display: none; /* Ocultamos logo para dar espacio al botón toggle */
+    display: none;
 }
 
 /* NAVEGACIÓN */
@@ -108,12 +107,19 @@ body, html {
 
 .nav-btn.active { background: rgba(37, 99, 235, 0.2); color: white; }
 
+/* DOTS INDICADORES Y COLORES */
 .dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
 .sidebar:not(.collapsed) .dot { margin-right: 12px; }
-.sidebar.collapsed .dot { margin: 0 auto; } /* Centra los puntos en modo colapsado */
+.sidebar.collapsed .dot { margin: 0 auto; }
 
-.lr { background: #ec4899; }
-.cr { background: #06b6d4; }
+.lr { background: #2563eb; } /* Azul */
+.cr { background: #dc2626; } /* Rojo */
+.pm { background: #e65100; } /* Naranja oscuro */
+
+/* NAV ICON (Para el ícono de documentación) */
+.nav-icon { font-size: 1.2rem; display: inline-block; flex-shrink: 0; line-height: 1; }
+.sidebar:not(.collapsed) .nav-icon { margin-right: 12px; }
+.sidebar.collapsed .nav-icon { margin: 0 auto; }
 
 /* MAIN CONTENT */
 .main-content { flex-grow: 1; position: relative; background: white; }

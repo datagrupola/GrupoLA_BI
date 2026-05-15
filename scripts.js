@@ -7,6 +7,10 @@ function switchView(viewKey) {
         chino: {
             src: "https://datastudio.google.com/embed/reporting/b3a1b8a4-311e-4d54-acc3-c6d323a8ba19/page/p_638aevo82d",
             link: "https://datastudio.google.com/reporting/b3a1b8a4-311e-4d54-acc3-c6d323a8ba19"
+        },
+        pacas: {
+            src: "https://datastudio.google.com/embed/reporting/28f7b91d-43c2-4f58-a87c-0dbbfa8f07d6/page/FE0xF",
+            link: "https://datastudio.google.com/reporting/28f7b91d-43c2-4f58-a87c-0dbbfa8f07d6"
         }
     };
 
