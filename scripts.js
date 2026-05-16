@@ -1,5 +1,9 @@
 function switchView(viewKey) {
     const views = {
+        global: {
+            src: "https://datastudio.google.com/embed/reporting/f65fb799-b645-42a5-beb4-8a824fb86613/page/lZNyF",
+            link: "https://datastudio.google.com/reporting/f65fb799-b645-42a5-beb4-8a824fb86613"
+        },
         larousse: {
             src: "https://datastudio.google.com/embed/reporting/055e6005-5133-498d-8a93-4960dbc60f1b/page/aSIvF",
             link: "https://datastudio.google.com/reporting/055e6005-5133-498d-8a93-4960dbc60f1b"

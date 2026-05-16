@@ -112,6 +112,7 @@ body, html {
 .sidebar:not(.collapsed) .dot { margin-right: 12px; }
 .sidebar.collapsed .dot { margin: 0 auto; }
 
+.dg { background: #334155; } /* Gris oscuro para Global */
 .lr { background: #2563eb; } /* Azul */
 .cr { background: #dc2626; } /* Rojo */
 .pm { background: #e65100; } /* Naranja oscuro */
