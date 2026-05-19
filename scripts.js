@@ -8,6 +8,10 @@ function switchView(viewKey) {
             src: "https://datastudio.google.com/embed/reporting/055e6005-5133-498d-8a93-4960dbc60f1b/page/aSIvF",
             link: "https://datastudio.google.com/reporting/055e6005-5133-498d-8a93-4960dbc60f1b"
         },
+        larousse_encuestas: {
+            src: "https://datastudio.google.com/embed/reporting/0f76e3dc-4f94-495b-86f4-0de5a6e63e2a/page/hOjyF",
+            link: "https://datastudio.google.com/reporting/0f76e3dc-4f94-495b-86f4-0de5a6e63e2a"
+        },
         chino: {
             src: "https://datastudio.google.com/embed/reporting/b3a1b8a4-311e-4d54-acc3-c6d323a8ba19/page/p_638aevo82d",
             link: "https://datastudio.google.com/reporting/b3a1b8a4-311e-4d54-acc3-c6d323a8ba19"
