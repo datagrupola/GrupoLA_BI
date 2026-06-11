@@ -13,8 +13,8 @@ function switchView(viewKey) {
             link: "https://datastudio.google.com/reporting/0f76e3dc-4f94-495b-86f4-0de5a6e63e2a"
         },
         chino: {
-            src: "https://datastudio.google.com/embed/reporting/b3a1b8a4-311e-4d54-acc3-c6d323a8ba19/page/p_638aevo82d",
-            link: "https://datastudio.google.com/reporting/b3a1b8a4-311e-4d54-acc3-c6d323a8ba19"
+            src: "https://datastudio.google.com/embed/reporting/b9b8ec77-cf71-4fe2-a950-c099f02eef72/page/p_du10sayh4d",
+            link: "https://datastudio.google.com/reporting/b9b8ec77-cf71-4fe2-a950-c099f02eef72"
         },
         pacas: {
             src: "https://datastudio.google.com/embed/reporting/28f7b91d-43c2-4f58-a87c-0dbbfa8f07d6/page/FE0xF",
