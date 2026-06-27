@@ -18,25 +18,25 @@
         <div class="brand-info">
           <strong>BI Center</strong>
         </div>
-        <button class="toggle-btn" onclick="toggleSidebar()" aria-label="Alternar menú">☰</button>
+        <button class="toggle-btn" id="sidebar-toggle" aria-label="Alternar menú">☰</button>
       </div>
 
       <nav class="sidebar-nav">
         <div class="nav-group">
           <small>MONITOREO DIRECTIVO</small>
-          <button class="nav-btn active" onclick="switchView('global')">
+          <button class="nav-btn active" data-view="global">
             <span class="dot dg"></span> <span>Global</span>
           </button>
-          <button class="nav-btn" onclick="switchView('larousse')">
+          <button class="nav-btn" data-view="larousse">
             <span class="dot lr"></span> <span>La Rousse</span>
           </button>
-          <button class="nav-btn" onclick="switchView('larousse_encuestas')">
+          <button class="nav-btn" data-view="larousse_encuestas">
             <span class="dot lr"></span> <span>La Rousse - Encuestas</span>
           </button>
-          <button class="nav-btn" onclick="switchView('chino')">
+          <button class="nav-btn" data-view="chino">
             <span class="dot cr"></span> <span>Chino Regalado</span>
           </button>
-          <button class="nav-btn" onclick="switchView('pacas')">
+          <button class="nav-btn" data-view="pacas">
             <span class="dot pm"></span> <span>Pacas MX</span>
           </button>
         </div>
