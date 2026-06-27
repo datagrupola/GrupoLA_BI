@@ -113,6 +113,7 @@ body, html {
 .sidebar.collapsed .dot { margin: 0 auto; }
 
 .dg { background: #334155; } /* Gris oscuro para Global */
+.af { background: #059669; } /* Verde para Afluencia */
 .lr { background: #2563eb; } /* Azul */
 .cr { background: #dc2626; } /* Rojo */
 .pm { background: #e65100; } /* Naranja oscuro */
