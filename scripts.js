@@ -25,6 +25,9 @@ const views = {
     }
 };
 
+const ACCESS_PASSWORD = 'GrupoLA2026';
+const UNLOCK_STORAGE_KEY = 'biDashboardUnlocked';
+
 function switchView(viewKey, activeButton) {
     const data = views[viewKey];
     if (!data) return;
@@ -43,7 +46,42 @@ function toggleSidebar() {
     localStorage.setItem('sidebarStatus', isCollapsed ? 'closed' : 'open');
 }
 
+function initializePasswordProtection() {
+    const gate = document.getElementById('password-gate');
+    const shell = document.getElementById('app-shell');
+    const form = document.getElementById('password-form');
+    const input = document.getElementById('password-input');
+    const error = document.getElementById('password-error');
+
+    if (!gate || !shell || !form || !input || !error) return;
+
+    if (localStorage.getItem(UNLOCK_STORAGE_KEY) === 'true') {
+        gate.hidden = true;
+        shell.hidden = false;
+        return;
+    }
+
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const submittedPassword = input.value.trim();
+
+        if (submittedPassword === ACCESS_PASSWORD) {
+            localStorage.setItem(UNLOCK_STORAGE_KEY, 'true');
+            gate.hidden = true;
+            shell.hidden = false;
+            error.textContent = '';
+            return;
+        }
+
+        error.textContent = 'Contraseña incorrecta';
+        input.value = '';
+        input.focus();
+    });
+}
+
 window.addEventListener('load', () => {
+    initializePasswordProtection();
+
     if (localStorage.getItem('sidebarStatus') === 'closed') {
         document.getElementById('sidebar').classList.add('collapsed');
     }
