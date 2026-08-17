@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const money = new Intl.NumberFormat('es-MX', {
   style: 'currency',
@@ -94,7 +94,7 @@ export default function PacasDashboard() {
 
       <section className="pacas-grid pacas-grid-main">
         <article className="pacas-card pacas-card-wide">
-          <CardHeader title="Venta diaria neta" detail={`Último dato: ${totals.lastDate || '—'}`} />
+          <CardHeader title="Venta diaria neta" detail={`Último dato: ${formatShortDate(totals.lastDate)}`} />
           <SalesChart rows={data.daily || []} />
         </article>
 
@@ -131,6 +131,16 @@ export default function PacasDashboard() {
   );
 }
 
+function formatShortDate(value) {
+  if (!value) return '—';
+  const date = new Date(`${String(value).slice(0, 10)}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat('es-MX', {
+    day: '2-digit',
+    month: 'short',
+  }).format(date);
+}
+
 function Kpi({ label, value, accent = false, negative = false, muted = false }) {
   return (
     <article className={`pacas-kpi${accent ? ' accent' : ''}${negative ? ' negative' : ''}`}>
@@ -159,38 +169,34 @@ function SummaryRow({ label, value }) {
 }
 
 function SalesChart({ rows }) {
-  const points = useMemo(() => {
-    if (!rows.length) return [];
-    const values = rows.map((row) => row.netSales);
-    const min = Math.min(0, ...values);
-    const max = Math.max(1, ...values);
-    const range = max - min || 1;
+  if (!rows.length) return <div className="pacas-empty">Sin datos para el periodo.</div>;
 
-    return rows.map((row, index) => ({
-      ...row,
-      x: rows.length === 1 ? 50 : 4 + (index / (rows.length - 1)) * 92,
-      y: 88 - ((row.netSales - min) / range) * 72,
-    }));
-  }, [rows]);
-
-  if (!points.length) return <div className="pacas-empty">Sin datos para el periodo.</div>;
-
-  const polyline = points.map((point) => `${point.x},${point.y}`).join(' ');
+  const maxAbsolute = Math.max(1, ...rows.map((row) => Math.abs(Number(row.netSales) || 0)));
 
   return (
-    <div className="pacas-chart-wrap">
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="pacas-chart" aria-label="Venta diaria neta">
-        <line x1="4" y1="88" x2="96" y2="88" className="pacas-chart-axis" />
-        <polyline points={polyline} fill="none" className="pacas-chart-line" />
-        {points.map((point) => (
-          <circle key={point.date} cx={point.x} cy={point.y} r="1.2" className="pacas-chart-dot" />
-        ))}
-      </svg>
-      <div className="pacas-chart-labels">
-        <span>{points[0].date.slice(8, 10)}</span>
-        <span>{points[Math.floor(points.length / 2)].date.slice(8, 10)}</span>
-        <span>{points[points.length - 1].date.slice(8, 10)}</span>
-      </div>
+    <div className="pacas-bars" role="img" aria-label="Venta diaria neta">
+      {rows.map((row) => {
+        const value = Number(row.netSales) || 0;
+        const height = Math.max(4, Math.round((Math.abs(value) / maxAbsolute) * 100));
+        const day = String(row.date).slice(8, 10);
+
+        return (
+          <div
+            className="pacas-bar-item"
+            key={row.date}
+            title={`${formatShortDate(row.date)} · ${money.format(value)}`}
+          >
+            <div className="pacas-bar-value">{money.format(value)}</div>
+            <div className="pacas-bar-shell">
+              <span
+                className={`pacas-bar-fill${value < 0 ? ' negative' : ''}`}
+                style={{ height: `${height}%` }}
+              />
+            </div>
+            <div className="pacas-bar-day">{day}</div>
+          </div>
+        );
+      })}
     </div>
   );
 }
