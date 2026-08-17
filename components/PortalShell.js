@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import logo from '../assets/LA_CLOTHES_Logotipo-04.png';
+import PacasDashboard from './PacasDashboard';
 
 const views = {
   global: {
@@ -31,8 +32,7 @@ const views = {
   },
   pacas: {
     label: 'Pacas MX',
-    src: 'https://datastudio.google.com/embed/reporting/28f7b91d-43c2-4f58-a87c-0dbbfa8f07d6/page/FE0xF',
-    link: 'https://datastudio.google.com/reporting/28f7b91d-43c2-4f58-a87c-0dbbfa8f07d6',
+    native: true,
   },
 };
 
@@ -99,21 +99,27 @@ export default function PortalShell() {
       </aside>
 
       <main className="main-content">
-        <div className="floating-actions">
-          <a href={current.link} target="_blank" rel="noreferrer" className="btn-minimal" title="Abrir en Looker Studio">
-            ↗
-          </a>
-        </div>
+        {!current.native && (
+          <div className="floating-actions">
+            <a href={current.link} target="_blank" rel="noreferrer" className="btn-minimal" title="Abrir en Looker Studio">
+              ↗
+            </a>
+          </div>
+        )}
 
         <section className="dashboard-viewport">
-          <div className="iframe-container">
-            <iframe
-              key={activeView}
-              src={current.src}
-              title={current.label}
-              allowFullScreen
-            />
-          </div>
+          {current.native ? (
+            <PacasDashboard />
+          ) : (
+            <div className="iframe-container">
+              <iframe
+                key={activeView}
+                src={current.src}
+                title={current.label}
+                allowFullScreen
+              />
+            </div>
+          )}
         </section>
       </main>
     </div>
