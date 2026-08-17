@@ -87,12 +87,13 @@ button, input { font: inherit; }
 .pacas-card-header { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-bottom: 18px; }
 .pacas-card-header h2 { font-size: 1rem; }
 .pacas-card-header span { color: #94a3b8; font-size: 0.72rem; white-space: nowrap; }
-.pacas-chart-wrap { height: 280px; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
-.pacas-chart { width: 100%; height: 100%; min-height: 0; flex: 1 1 0; overflow: hidden; display: block; }
-.pacas-chart-axis { stroke: #dbe2ea; stroke-width: 0.45; vector-effect: non-scaling-stroke; }
-.pacas-chart-line { stroke: #2563eb; stroke-width: 1.15; vector-effect: non-scaling-stroke; }
-.pacas-chart-dot { fill: #2563eb; vector-effect: non-scaling-stroke; }
-.pacas-chart-labels { display: flex; justify-content: space-between; color: #94a3b8; font-size: 0.7rem; padding: 4px 2px 0; }
+.pacas-bars { height: 280px; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(46px, 1fr); align-items: end; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 8px 2px 0; }
+.pacas-bar-item { height: 100%; min-width: 46px; display: grid; grid-template-rows: 24px minmax(0, 1fr) 20px; gap: 6px; align-items: end; }
+.pacas-bar-value { font-size: 0.62rem; color: #64748b; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pacas-bar-shell { position: relative; height: 100%; min-height: 0; border-radius: 8px 8px 3px 3px; background: linear-gradient(to top, #f8fafc, #eef2f7); overflow: hidden; display: flex; align-items: flex-end; }
+.pacas-bar-fill { width: 100%; min-height: 4px; display: block; border-radius: 7px 7px 2px 2px; background: #2563eb; }
+.pacas-bar-fill.negative { background: #dc2626; }
+.pacas-bar-day { font-size: 0.68rem; color: #94a3b8; text-align: center; }
 .pacas-summary-list { display: grid; gap: 4px; }
 .pacas-summary-row { display: flex; justify-content: space-between; gap: 18px; padding: 13px 0; border-bottom: 1px solid #eef2f7; font-size: 0.84rem; }
 .pacas-summary-row:last-child { border-bottom: none; }
