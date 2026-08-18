@@ -15,7 +15,6 @@ const pacasStyles = `
 .pacas-dashboard-v2{height:100%;overflow:auto;padding:26px;background:#f5f7fb;color:#172033}
 .pacas-header-v2{align-items:center;margin-bottom:20px}
 .pacas-header-actions{display:flex;align-items:center;gap:18px}
-.pacas-last-cut{font-size:.82rem;color:#475569;white-space:nowrap}
 .pacas-period-control-v2{position:relative;display:flex;align-items:center;gap:10px;min-width:260px;padding:12px 15px;border:1px solid #2563eb;border-radius:13px;background:#2563eb;color:#fff;box-shadow:0 5px 14px rgba(37,99,235,.18);cursor:pointer}
 .pacas-period-control-v2 input{position:absolute;inset:0;opacity:0;pointer-events:none}
 .pacas-period-label{flex:1;font-size:.82rem;font-weight:750}
@@ -63,8 +62,8 @@ const pacasStyles = `
 .pacas-summary-row{padding:9px 0}
 .pacas-summary-row span,.pacas-summary-row strong{font-size:.74rem}
 @media(max-width:1350px){.pacas-layout-v2{grid-template-columns:1fr}.pacas-side-column-v2{grid-template-columns:repeat(4,1fr)}.pacas-gauge-card{min-height:150px}.pacas-gauge{width:150px;height:75px}.pacas-gauge-center{left:20px;right:20px;height:55px}.pacas-gauge-center strong{font-size:1.25rem}}
-@media(max-width:1100px){.pacas-bottom-grid-v2{grid-template-columns:1fr 1fr}.pacas-bottom-grid-v2>article:last-child{grid-column:1/-1}.pacas-header-actions{align-items:stretch;flex-direction:column;gap:8px}.pacas-last-cut{text-align:right}}
-@media(max-width:760px){.pacas-dashboard-v2{padding:18px}.pacas-kpis-v2{grid-template-columns:repeat(2,1fr)}.pacas-bottom-grid-v2,.pacas-side-column-v2{grid-template-columns:1fr}.pacas-bottom-grid-v2>article:last-child{grid-column:auto}.pacas-period-control-v2{min-width:0;width:100%}.pacas-last-cut{text-align:left}}
+@media(max-width:1100px){.pacas-bottom-grid-v2{grid-template-columns:1fr 1fr}.pacas-bottom-grid-v2>article:last-child{grid-column:1/-1}.pacas-header-actions{align-items:stretch;flex-direction:column;gap:8px}}
+@media(max-width:760px){.pacas-dashboard-v2{padding:18px}.pacas-kpis-v2{grid-template-columns:repeat(2,1fr)}.pacas-bottom-grid-v2,.pacas-side-column-v2{grid-template-columns:1fr}.pacas-bottom-grid-v2>article:last-child{grid-column:auto}.pacas-period-control-v2{min-width:0;width:100%}}
 `;
 
 function currentPeriod() {
@@ -151,9 +150,6 @@ export default function PacasDashboard() {
         </div>
 
         <div className="pacas-header-actions">
-          <div className="pacas-last-cut">
-            Último corte: <strong>{formatLongDate(totals.lastDate)}</strong>
-          </div>
           <div
             className="pacas-period-control pacas-period-control-v2"
             role="button"
@@ -281,17 +277,6 @@ function formatPeriod(value) {
   return `${formatter.format(first)} - ${formatter.format(last)}`;
 }
 
-function formatLongDate(value) {
-  if (!value) return '—';
-  const date = new Date(`${String(value).slice(0, 10)}T12:00:00`);
-  if (Number.isNaN(date.getTime())) return String(value);
-  return new Intl.DateTimeFormat('es-MX', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(date);
-}
-
 function formatShortDate(value) {
   if (!value) return '—';
   const date = new Date(`${String(value).slice(0, 10)}T12:00:00`);
@@ -362,10 +347,11 @@ function SummaryRow({ label, value }) {
 
 function Gauge({ value }) {
   const percent = value == null ? null : Math.max(0, Math.min(100, value * 100));
+  const visibleArc = percent == null ? 0 : percent / 2;
 
   return (
     <div className="pacas-gauge-wrap">
-      <div className="pacas-gauge" style={{ '--gauge': `${percent ?? 0}%` }}>
+      <div className="pacas-gauge" style={{ '--gauge': `${visibleArc}%` }}>
         <div className="pacas-gauge-center">
           <strong>{percent == null ? '—' : `${number.format(percent)}%`}</strong>
           <span>del objetivo mensual</span>
