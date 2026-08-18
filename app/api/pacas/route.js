@@ -38,10 +38,7 @@ function number(value) {
 export async function GET(request) {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
-    return NextResponse.json(
-      { error: 'DATABASE_URL is not configured' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'DATABASE_URL is not configured' }, { status: 500 });
   }
 
   const url = new URL(request.url);
@@ -50,7 +47,7 @@ export async function GET(request) {
   const end = nextMonth(period);
   const sql = neon(databaseUrl);
 
-  const [daily, sellers, payments, targets] = await Promise.all([
+  const [daily, sellers, payments, targets, inputs] = await Promise.all([
     sql`
       SELECT sale_date, gross_sales, returns_amount, net_sales, tickets_count,
              unresolved_returns_count
@@ -88,6 +85,14 @@ export async function GET(request) {
       WHERE office_id = 6 AND period_date = ${start}::date
       LIMIT 1
     `,
+    sql`
+      SELECT input_date, messages_count, visits_count
+      FROM public.pacas_daily_inputs
+      WHERE office_id = 6
+        AND input_date >= ${start}::date
+        AND input_date < ${end}::date
+      ORDER BY input_date
+    `,
   ]);
 
   const totals = daily.reduce(
@@ -102,6 +107,15 @@ export async function GET(request) {
     { grossSales: 0, returns: 0, netSales: 0, tickets: 0, unresolvedReturns: 0 }
   );
 
+  const inputTotals = inputs.reduce(
+    (acc, row) => {
+      acc.messages += number(row.messages_count);
+      acc.visits += number(row.visits_count);
+      return acc;
+    },
+    { messages: 0, visits: 0 }
+  );
+
   const target = targets[0] ? number(targets[0].target_amount) : null;
   const lastDate = daily.length ? String(daily[daily.length - 1].sale_date).slice(0, 10) : null;
   const daysWithData = daily.length;
@@ -114,6 +128,7 @@ export async function GET(request) {
     office: { id: 6, name: 'PAQUEROS MX' },
     totals: {
       ...totals,
+      ...inputTotals,
       target,
       projection,
       currentCompliance: target ? totals.netSales / target : null,
@@ -130,6 +145,11 @@ export async function GET(request) {
       returns: number(row.returns_amount),
       netSales: number(row.net_sales),
       tickets: number(row.tickets_count),
+    })),
+    inputs: inputs.map((row) => ({
+      date: String(row.input_date).slice(0, 10),
+      messages: number(row.messages_count),
+      visits: number(row.visits_count),
     })),
     sellers: sellers.map((row) => ({
       sellerId: number(row.seller_id),
