@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import logo from '../assets/LA_CLOTHES_Logotipo-04.png';
 import PacasDashboard from './PacasDashboard';
+import LaRousseDashboard from './LaRousseDashboard';
 
 const views = {
   global: {
@@ -22,6 +23,7 @@ const views = {
   },
   larousse: {
     label: 'La Rousse',
+    native: true,
     src: 'https://datastudio.google.com/embed/reporting/055e6005-5133-498d-8a93-4960dbc60f1b/page/aSIvF',
     link: 'https://datastudio.google.com/reporting/055e6005-5133-498d-8a93-4960dbc60f1b',
   },
@@ -109,7 +111,7 @@ export default function PortalShell() {
 
         <section className="dashboard-viewport">
           {current.native ? (
-            <PacasDashboard />
+            activeView === 'larousse' ? <LaRousseDashboard /> : <PacasDashboard />
           ) : (
             <div className="iframe-container">
               <iframe
