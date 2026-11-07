@@ -128,3 +128,118 @@ button, input { font: inherit; }
   .pacas-header { align-items: stretch; flex-direction: column; }
   .pacas-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+
+/* La Rousse — commercial-performance dashboard, scoped to avoid altering other brands */
+.lr2{height:100%;overflow:auto;padding:30px 34px 44px;background:#f4f6fa;color:#15233a}
+.lr2 *{box-sizing:border-box}
+.lr2-header{display:flex;justify-content:space-between;align-items:flex-end;gap:22px;flex-wrap:wrap}
+.lr2-eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;color:#1c5f9e;margin-bottom:8px}
+.lr2-header h1{font-size:clamp(26px,2.8vw,36px);font-weight:800;line-height:1.08;letter-spacing:-.035em;margin:0}
+.lr2-header p{font-size:14px;color:#64748b;margin-top:8px;text-transform:capitalize}
+.lr2-controls{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px}
+.lr2-controls label{display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;letter-spacing:.02em;color:#64748b}
+.lr2-controls input,.lr2-controls select,.lr2-controls button,.lr2-error button{min-height:42px;padding:9px 12px;border-radius:10px;border:1px solid #d7dfeb;background:#fff;color:#182338;font-size:13px;font-weight:600}
+.lr2-controls button,.lr2-error button{cursor:pointer;color:#1e4594}
+.lr2-controls button:hover,.lr2-error button:hover{background:#eff5ff}
+.lr2-updated{margin:18px 0 14px;display:flex;align-items:center;gap:7px;font-size:11px;color:#64748b}
+.lr2-live-dot{width:7px;height:7px;border-radius:50%;background:#10a37f;display:inline-block}
+.lr2-overview{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px;margin-bottom:14px}
+.lr2-hero,.lr2-metric,.lr2-panel{border-radius:16px;border:1px solid #e3e9f2;box-shadow:0 5px 24px rgba(18,45,78,.035)}
+.lr2-hero{background:linear-gradient(125deg,#14294d 0%,#1b477d 100%);padding:27px 29px;color:#fff;display:flex;flex-direction:column;justify-content:space-between;min-height:208px}
+.lr2-metric-label{display:block;font-size:12px;font-weight:700;color:#68798e}
+.lr2-hero .lr2-metric-label{color:#c6d9f4}
+.lr2-metric-value{display:block;font-size:clamp(23px,2.5vw,32px);font-weight:800;letter-spacing:-.045em;margin:14px 0 6px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.lr2-hero .lr2-metric-value{font-size:clamp(34px,4.1vw,48px);line-height:1.12;letter-spacing:-.055em}
+.lr2-metric-foot{display:block;font-size:11px;line-height:1.5;color:#748398}
+.lr2-hero .lr2-metric-foot{color:#c6d9f4}
+.lr2-side-metrics{display:grid;grid-template-rows:1fr 1fr;gap:14px}
+.lr2-metric{background:#fff;padding:17px 21px;min-width:0}
+.lr2-side-metrics .lr2-metric-value{margin:9px 0 5px}
+.lr2-contract-note{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:13px 16px;margin-bottom:20px;border:1px solid #e1e6ef;background:#edf1f7;border-radius:12px;color:#2d415c;font-size:12px}
+.lr2-contract-note strong{font-size:12px}
+.lr2-contract-note p{font-size:11px;line-height:1.6;color:#62748b;margin:4px 0 0}
+.lr2-contract-note a{flex-shrink:0;color:#214e94;font-weight:700;text-decoration:none;white-space:nowrap}
+.lr2-contract-note a:hover{text-decoration:underline}
+.lr2-analysis{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(285px,1fr);gap:14px;margin-bottom:14px}
+.lr2-panel{min-width:0;background:#fff;padding:22px 22px 20px}
+.lr2-panel-head{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px}
+.lr2-panel-head h2{font-size:16px;letter-spacing:-.02em;font-weight:800;margin:0}
+.lr2-panel-head p{margin-top:5px;font-size:11px;color:#8490a2}
+.lr2-legend{display:flex;flex-wrap:wrap;align-items:center;gap:13px;font-size:10px;color:#596a7f}
+.lr2-legend span{display:flex;align-items:center;gap:5px}
+.lr2-dot{height:8px;width:8px;border-radius:3px;display:inline-block}
+.lr2-dot-approved{background:#0f9778}
+.lr2-dot-pending{background:#3a78b5}
+.lr2-dot-correction{background:#d69b33}
+.lr2-chart-scroll{width:100%;overflow-x:auto;overflow-y:hidden}
+.lr2-chart{height:238px;display:flex;align-items:flex-end;gap:7px;padding:9px 4px 1px;border-bottom:1px solid #e9eef5}
+.lr2-bar-column{display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;gap:9px;min-width:28px;flex:1}
+.lr2-bar-space{height:201px;display:flex;align-items:flex-end;justify-content:center}
+.lr2-bar{display:flex;flex-direction:column-reverse;overflow:hidden;width:80%;max-width:34px;border-radius:5px 5px 0 0;min-height:2px}
+.lr2-bar span{width:100%;display:block}
+.lr2-bar-approved{background:#0f9778}
+.lr2-bar-pending{background:#3a78b5}
+.lr2-bar-correction{background:#d69b33}
+.lr2-bar-label{text-align:center;font-size:10px;color:#7a899d;font-variant-numeric:tabular-nums}
+.lr2-chart-caption{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:13px;font-size:10px;color:#8793a4;line-height:1.5}
+.lr2-branch-list{display:grid;gap:16px;margin-top:18px}
+.lr2-branch-row{display:flex;justify-content:space-between;gap:16px;font-size:12px;align-items:baseline}
+.lr2-branch-row span{color:#455a74;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lr2-branch-row strong{font-weight:800;color:#172b49;font-variant-numeric:tabular-nums;white-space:nowrap}
+.lr2-track{height:7px;border-radius:99px;background:#eff2f7;overflow:hidden;margin-top:8px}
+.lr2-track span{height:100%;display:block;background:#567bb4;border-radius:inherit}
+.lr2-branch small{color:#8a6f36;font-size:10px}
+.lr2-table-panel{margin-bottom:14px}
+.lr2-table-scroll{width:100%;overflow-x:auto}
+.lr2-table-scroll table{width:100%;border-collapse:collapse;font-size:12px}
+.lr2-table-scroll th,.lr2-table-scroll td{padding:14px 12px;border-bottom:1px solid #ebf0f5;white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+.lr2-table-scroll th:first-child,.lr2-table-scroll td:first-child{text-align:left}
+.lr2-table-scroll thead th{font-size:11px;color:#697c93;font-weight:700}
+.lr2-table-scroll tbody th{font-weight:750;color:#24344c}
+.lr2-table-scroll tbody td{font-weight:600;color:#233c60}
+.lr2-table-scroll tbody td small{margin-left:5px;color:#9a701f;font-size:10px}
+.lr2-table-scroll tbody tr:last-child td,.lr2-table-scroll tbody tr:last-child th{border-bottom:0}
+.lr2-audit{display:flex;align-items:center;flex-wrap:wrap;gap:8px 20px;border-top:1px solid #dce3ed;padding:15px 4px;color:#77879b;font-size:11px;line-height:1.6}
+.lr2-audit strong{font-size:12px;color:#344967}
+.lr2-audit-heading{font-weight:800;color:#334662}
+.lr2-loading{min-height:200px;display:flex;align-items:center;justify-content:center;gap:14px;font-weight:650;color:#60748e}
+.lr2-error{color:#a12d35}
+.lr2-empty{min-height:207px;display:grid;place-items:center;text-align:center;color:#8392a5;font-size:12px}
+@media(max-width:1100px){
+ .lr2{padding:25px 22px 36px}
+ .lr2-analysis{grid-template-columns:1fr}
+ .lr2-branch-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:740px){
+ .lr2{padding:19px 15px 28px}
+ .lr2-header{align-items:stretch}
+ .lr2-controls{width:100%}
+ .lr2-controls label{flex:1;min-width:130px}
+ .lr2-controls input,.lr2-controls select{width:100%}
+ .lr2-overview{grid-template-columns:1fr}
+ .lr2-side-metrics{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:1fr}
+ .lr2-metric{padding:16px}
+ .lr2-metric-value{font-size:21px}
+ .lr2-hero{min-height:170px;padding:22px}
+ .lr2-hero .lr2-metric-value{font-size:35px}
+ .lr2-contract-note{align-items:flex-start;flex-direction:column}
+ .lr2-panel{padding:18px 15px}
+ .lr2-branch-list{grid-template-columns:1fr}
+ .lr2-audit{gap:6px 14px}
+}
+@media(max-width:600px){
+ .app-shell:has(.lr2){flex-direction:column}
+ .app-shell:has(.lr2) .sidebar{width:100%;min-height:auto;flex-shrink:0;padding:8px 12px}
+ .app-shell:has(.lr2) .sidebar-header{margin-bottom:8px;min-height:28px}
+ .app-shell:has(.lr2) .sidebar-nav{display:flex;overflow-x:auto;flex:none;gap:8px}
+ .app-shell:has(.lr2) .nav-group{display:flex;gap:6px;margin:0}
+ .app-shell:has(.lr2) .nav-group small,
+ .app-shell:has(.lr2) .sidebar-footer,
+ .app-shell:has(.lr2) .nav-link,
+ .app-shell:has(.lr2) .toggle-btn{display:none}
+ .app-shell:has(.lr2) .nav-btn{white-space:nowrap;margin:0;padding:9px 12px}
+ .app-shell:has(.lr2) .nav-btn span:not(.dot){display:inline}
+ .app-shell:has(.lr2) .brand-info{display:block}
+ .app-shell:has(.lr2) .main-content{width:100%;min-height:0}
+}
