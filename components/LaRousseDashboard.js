@@ -1,16 +1,303 @@
 'use client';
-import {useEffect,useState}from'react';
-import{labels,money,summarize}from'../lib/larousse.mjs';
-const current=()=>{const p=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Mexico_City',year:'numeric',month:'2-digit'}).formatToParts(new Date());return p.find(x=>x.type==='year').value+'-'+p.find(x=>x.type==='month').value};
-function Amount({rows}){const s=summarize(rows);return <><strong>{s.net===null?'No disponible':money(s.net)}</strong><small>{s.known}/{s.count} cortes con venta neta disponible{s.net===null?' · Subtotal conocido '+money(s.knownNet):''}</small></>}
-export default function LaRousseDashboard(){const[month,setMonth]=useState(current),[branch,setBranch]=useState(''),[data,setData]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[reload,setReload]=useState(0);
- useEffect(()=>{const ac=new AbortController();setLoading(true);setError('');setData(null);fetch('/api/larousse?'+new URLSearchParams({month,...(branch?{branch}:{})}),{signal:ac.signal,cache:'no-store'}).then(async r=>{if(!r.ok)throw Error('No fue posible consultar Finance.');return r.json()}).then(d=>{if(!ac.signal.aborted)setData(d)}).catch(e=>{if(!ac.signal.aborted)setError(e.message)}).finally(()=>{if(!ac.signal.aborted)setLoading(false)});return()=>ac.abort()},[month,branch,reload]);
- const rows=data?.rows||[],confirmed=rows.filter(r=>r.state==='APPROVED'),pending=rows.filter(r=>r.state==='PENDING_REVIEW'),states=[...new Set([...Object.keys(labels),...rows.map(r=>r.state)])],days=[...new Set(rows.map(r=>r.date))].sort();
- return <div className="lr-dashboard"><style>{styles}</style><header><div><h1>La Rousse — Dashboard financiero</h1><p>MXN · Fuente: La Rousse Finance</p></div><div className="lr-controls"><label>Mes<input aria-label="Mes financiero" type="month" value={month} onChange={e=>{if(e.target.value)setMonth(e.target.value)}}/></label><label>Sucursal<select value={branch} onChange={e=>setBranch(e.target.value)} aria-label="Sucursal financiera"><option value="">Todas</option>{data?.branches.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select></label><button onClick={()=>setReload(x=>x+1)}>Actualizar</button></div></header>
- {loading?<p role="status">Consultando Finance…</p>:error?<div role="alert">{error} <button onClick={()=>setReload(x=>x+1)}>Reintentar</button></div>:<><p className="lr-updated">Última consulta: {new Date(data.queried_at).toLocaleString('es-MX',{timeZone:'America/Mexico_City'})} · Ciudad de México</p><section className="lr-kpis"><article className="confirmed"><h2>Venta neta confirmada</h2><Amount rows={confirmed}/></article><article className="pending"><h2>Venta neta pendiente de confirmación</h2><Amount rows={pending}/><span>Provisional</span></article><article><h2>Cortes que requieren corrección</h2><strong>{rows.filter(r=>r.state==='CORRECTION_REQUESTED').length}</strong></article><article><h2>Históricos sin revisar</h2><strong>{rows.filter(r=>r.state==='HISTORICO_SIN_REVISAR').length}</strong><small>Excluidos de ventas confirmadas</small></article></section>
- {!rows.length?<p role="status">Sin cortes para el período y sucursal seleccionados.</p>:<><div className="lr-grid"><section className="lr-panel"><h2>Evolución diaria de venta neta</h2><Trend days={days} confirmed={confirmed} pending={pending}/><div className="lr-scroll"><table><thead><tr><th>Fecha</th><th>Confirmada</th><th>Pendiente · provisional</th></tr></thead><tbody>{days.map(d=><tr key={d}><td>{d}</td><td>{money(summarize(confirmed.filter(r=>r.date===d)).net)}</td><td>{money(summarize(pending.filter(r=>r.date===d)).net)}</td></tr>)}</tbody></table></div></section><section className="lr-panel"><h2>Distribución por estado</h2>{states.map(s=><div className="lr-state" key={s}><span>{labels[s]||s}</span><strong>{rows.filter(r=>r.state===s).length}</strong><progress max={rows.length} value={rows.filter(r=>r.state===s).length}/></div>)}</section></div><section className="lr-panel"><h2>Comparativo y desglose por sucursal</h2><div className="lr-scroll"><table><thead><tr><th>Sucursal</th><th>Estado</th><th>Cortes</th><th>Venta neta</th><th>Cobertura</th><th>Total declarado</th><th>Gastos registrados en cortes</th></tr></thead><tbody>{data.branches.flatMap(b=>states.map(state=>{const group=rows.filter(r=>r.branch_id===b.id&&r.state===state);if(!group.length)return null;const s=summarize(group);return <tr key={b.id+state}><th>{b.name}</th><td>{labels[state]||state}</td><td>{s.count}</td><td>{money(s.net)}</td><td>{s.known}/{s.count}</td><td>{money(s.declared)}</td><td>{money(s.expenses)}</td></tr>}))}</tbody></table></div></section></>}
- </>}<footer><a href="https://datastudio.google.com/reporting/055e6005-5133-498d-8a93-4960dbc60f1b" target="_blank" rel="noreferrer">Consultar reporte anterior</a></footer></div>
-}
-const styles=`.lr-dashboard{height:100%;overflow:auto;padding:28px;background:#f5f7fb;color:#182338}.lr-dashboard *{box-sizing:border-box}.lr-dashboard header{display:flex;justify-content:space-between;gap:24px;align-items:center;flex-wrap:wrap}.lr-dashboard h1{font-size:26px;margin:0}.lr-dashboard h2{font-size:15px;margin:0 0 15px}.lr-dashboard p,.lr-dashboard small{color:#536174}.lr-controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap}.lr-controls label{display:flex;flex-direction:column;gap:6px;font-size:13px}.lr-dashboard input,.lr-dashboard select,.lr-dashboard button{padding:10px;border:1px solid #cbd5e1;border-radius:8px;background:white;color:#182338}.lr-dashboard button{cursor:pointer}.lr-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin:22px 0}.lr-kpis article,.lr-panel{background:white;border:1px solid #e2e8f0;border-radius:16px;padding:20px}.lr-kpis strong{font-size:28px;display:block;overflow-wrap:anywhere}.lr-kpis small{display:block;margin-top:10px}.lr-kpis .confirmed{border-top:4px solid #11805e}.lr-kpis .pending{border-top:4px solid #ca8a04}.lr-kpis span{font-size:12px;color:#986100}.lr-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}.lr-scroll{overflow:auto}.lr-dashboard table{width:100%;border-collapse:collapse;font-size:13px}.lr-dashboard th,.lr-dashboard td{padding:12px;text-align:left;border-bottom:1px solid #e2e8f0;white-space:nowrap}.lr-dashboard th{color:#475569}.lr-state{display:flex;flex-wrap:wrap;justify-content:space-between;margin:16px 0;gap:8px}.lr-state progress{width:100%;accent-color:#263f8f}.lr-updated{font-size:12px}.lr-dashboard footer{padding:24px 0;font-size:13px}@media(max-width:1000px){.lr-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.lr-grid{grid-template-columns:1fr}}@media(max-width:600px){.lr-dashboard{padding:16px}.lr-kpis{grid-template-columns:1fr}.lr-dashboard h1{font-size:22px}.lr-controls{width:100%}.app-shell:has(.lr-dashboard){flex-direction:column}.app-shell:has(.lr-dashboard) .sidebar{width:100%;min-height:auto;flex-shrink:0;padding:8px 12px}.app-shell:has(.lr-dashboard) .sidebar-header{margin-bottom:8px;min-height:28px}.app-shell:has(.lr-dashboard) .sidebar-nav{display:flex;overflow-x:auto;flex:none;gap:8px}.app-shell:has(.lr-dashboard) .nav-group{display:flex;gap:6px;margin:0}.app-shell:has(.lr-dashboard) .nav-group small,.app-shell:has(.lr-dashboard) .sidebar-footer,.app-shell:has(.lr-dashboard) .nav-link,.app-shell:has(.lr-dashboard) .toggle-btn{display:none}.app-shell:has(.lr-dashboard) .nav-btn{white-space:nowrap;margin:0;padding:9px 12px}.app-shell:has(.lr-dashboard) .nav-btn span:not(.dot){display:inline}.app-shell:has(.lr-dashboard) .brand-info{display:block}.app-shell:has(.lr-dashboard) .main-content{width:100%}}`;
 
-function Trend({days,confirmed,pending}){const series=[confirmed,pending].map(rows=>days.map(d=>summarize(rows.filter(r=>r.date===d)).net));const max=series.flat().reduce((m,n)=>n!==null&&n>m?n:m,1n);return <><svg viewBox="0 0 600 170" role="img" aria-label="Evolución diaria: verde confirmada, ámbar pendiente; cifras exactas en la tabla"><line x1="20" y1="145" x2="580" y2="145" stroke="#cbd5e1"/>{series.map((values,j)=><g key={j}>{values.map((n,i)=>n===null?null:<circle key={i} cx={20+(days.length===1?0:i*560/(days.length-1))} cy={145-Number(n*120n/max)} r="4" fill={j?'#ca8a04':'#11805e'}><title>{days[i]} · {j?'Pendiente':'Confirmada'}: {money(n)}</title></circle>)}{values.map((n,i)=>!i||n===null||values[i-1]===null?null:<line key={i} x1={20+(i-1)*560/Math.max(days.length-1,1)} x2={20+i*560/Math.max(days.length-1,1)} y1={145-Number(values[i-1]*120n/max)} y2={145-Number(n*120n/max)} stroke={j?'#ca8a04':'#11805e'} strokeWidth="2"/>)}</g>)}</svg><p><span style={{color:'#11805e'}}>● Confirmada</span> · <span style={{color:'#986100'}}>● Pendiente</span></p></>}
+import { useEffect, useState } from 'react';
+import { money, summarize } from '../lib/larousse.mjs';
+
+const REPORTABLE = new Set(['APPROVED', 'PENDING_REVIEW', 'CORRECTION_REQUESTED']);
+const LOOKER_LEGACY = 'https://datastudio.google.com/reporting/055e6005-5133-498d-8a93-4960dbc60f1b';
+
+function currentMonth() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Mexico_City', year: 'numeric', month: '2-digit',
+  }).formatToParts(new Date());
+  return parts.find((part) => part.type === 'year').value + '-' +
+    parts.find((part) => part.type === 'month').value;
+}
+
+function monthTitle(period) {
+  const parts = period.split('-').map(Number);
+  return new Intl.DateTimeFormat('es-MX', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+    .format(new Date(Date.UTC(parts[0], parts[1] - 1, 1)));
+}
+
+function displaySummary(summary) {
+  return {
+    value: money(summary.net === null ? summary.knownNet : summary.net),
+    partial: summary.known !== summary.count,
+    coverage: summary.known + '/' + summary.count,
+  };
+}
+
+function MoneyCard({ label, summary, main = false, note = '' }) {
+  const result = displaySummary(summary);
+  return (
+    <article className={main ? 'lr2-hero' : 'lr2-metric'}>
+      <span className="lr2-metric-label">{label}</span>
+      <strong className="lr2-metric-value">{result.value}</strong>
+      <span className="lr2-metric-foot">
+        {result.partial ? 'Subtotal disponible · ' + result.coverage + ' cortes con importe' : note}
+      </span>
+    </article>
+  );
+}
+
+function DailySales({ rows }) {
+  const dates = [...new Set(rows.map((row) => row.date))].sort();
+  const daily = dates.map((date) => {
+    const day = rows.filter((row) => row.date === date);
+    const confirmed = summarize(day.filter((row) => row.state === 'APPROVED')).knownNet;
+    const pending = summarize(day.filter((row) => row.state === 'PENDING_REVIEW')).knownNet;
+    const correction = summarize(day.filter((row) => row.state === 'CORRECTION_REQUESTED')).knownNet;
+    return { date, confirmed, pending, correction, total: confirmed + pending + correction };
+  });
+  const maximum = daily.reduce((previous, item) => item.total > previous ? item.total : previous, 0n);
+  const percentage = (value, whole) => whole === 0n ? 0 : Number(value * 1000n / whole) / 10;
+
+  return (
+    <section className="lr2-panel lr2-chart-panel" aria-labelledby="lr2-trend-title">
+      <div className="lr2-panel-head">
+        <div>
+          <h2 id="lr2-trend-title">Evolución de venta neta</h2>
+          <p>Por fecha operativa · importes registrados</p>
+        </div>
+        <div className="lr2-legend">
+          <span><i className="lr2-dot lr2-dot-approved" />Aprobada</span>
+          <span><i className="lr2-dot lr2-dot-pending" />En revisión</span>
+          <span><i className="lr2-dot lr2-dot-correction" />Corrección</span>
+        </div>
+      </div>
+      {!daily.length ? (
+        <div className="lr2-empty">No hay ventas reportadas para los filtros seleccionados.</div>
+      ) : (
+        <div className="lr2-chart-scroll">
+          <div className="lr2-chart" style={{ minWidth: Math.max(420, daily.length * 42) + 'px' }}>
+            {daily.map((item) => {
+              const height = maximum > 0n ? Math.max(2, percentage(item.total, maximum)) : 0;
+              return (
+                <div className="lr2-bar-column" key={item.date}>
+                  <span className="lr2-bar-space" title={item.date + ' · ' + money(item.total)}>
+                    <span className="lr2-bar" style={{ height: height + '%' }}>
+                      {item.confirmed > 0n && (
+                        <span className="lr2-bar-approved" style={{ height: percentage(item.confirmed, item.total) + '%' }} />
+                      )}
+                      {item.pending > 0n && (
+                        <span className="lr2-bar-pending" style={{ height: percentage(item.pending, item.total) + '%' }} />
+                      )}
+                      {item.correction > 0n && (
+                        <span className="lr2-bar-correction" style={{ height: percentage(item.correction, item.total) + '%' }} />
+                      )}
+                    </span>
+                  </span>
+                  <span className="lr2-bar-label">{item.date.slice(8)}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      <div className="lr2-chart-caption">
+        <span>Los importes corresponden a cortes recibidos en Finance; no todos están aprobados.</span>
+        <span>Desliza para ver más días</span>
+      </div>
+    </section>
+  );
+}
+
+function BranchSales({ branches, reported }) {
+  const groups = branches.map((branch) => {
+    const rows = reported.filter((row) => row.branch_id === branch.id);
+    return { ...branch, summary: summarize(rows), days: new Set(rows.map((row) => row.date)).size };
+  }).sort((a, b) => a.summary.knownNet === b.summary.knownNet
+    ? a.name.localeCompare(b.name, 'es-MX')
+    : a.summary.knownNet > b.summary.knownNet ? -1 : 1);
+  const maximum = groups.reduce((previous, item) =>
+    item.summary.knownNet > previous ? item.summary.knownNet : previous, 0n);
+
+  return (
+    <section className="lr2-panel lr2-branch-panel">
+      <div className="lr2-panel-head">
+        <div>
+          <h2>Desempeño por sucursal</h2>
+          <p>Venta neta reportada</p>
+        </div>
+      </div>
+      <div className="lr2-branch-list">
+        {groups.map((item) => {
+          const value = displaySummary(item.summary);
+          const ratio = maximum > 0n ? Number(item.summary.knownNet * 1000n / maximum) / 10 : 0;
+          return (
+            <div className="lr2-branch" key={item.id}>
+              <div className="lr2-branch-row">
+                <span title={item.name}>{item.name}</span>
+                <strong>{value.value}</strong>
+              </div>
+              <div className="lr2-track"><span style={{ width: ratio + '%' }} /></div>
+              {value.partial && <small>Importe parcial · {value.coverage} cortes</small>}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function BranchTable({ branches, reported }) {
+  const groups = branches.map((branch) => {
+    const rows = reported.filter((row) => row.branch_id === branch.id);
+    return {
+      ...branch,
+      all: summarize(rows),
+      confirmed: summarize(rows.filter((row) => row.state === 'APPROVED')),
+      provisional: summarize(rows.filter((row) => row.state !== 'APPROVED')),
+      days: new Set(rows.map((row) => row.date)).size,
+    };
+  });
+  return (
+    <section className="lr2-panel lr2-table-panel">
+      <div className="lr2-panel-head"><h2>Detalle comercial por sucursal</h2></div>
+      <div className="lr2-table-scroll">
+        <table>
+          <thead><tr>
+            <th scope="col">Sucursal</th>
+            <th scope="col">Venta neta</th>
+            <th scope="col">Aprobada</th>
+            <th scope="col">En revisión</th>
+            <th scope="col">Días reportados</th>
+          </tr></thead>
+          <tbody>{groups.map((branch) => (
+            <tr key={branch.id}>
+              <th scope="row">{branch.name}</th>
+              <td>{displaySummary(branch.all).value}{branch.all.known !== branch.all.count && <small>Parcial</small>}</td>
+              <td>{displaySummary(branch.confirmed).value}</td>
+              <td>{displaySummary(branch.provisional).value}</td>
+              <td>{branch.days}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+export default function LaRousseDashboard() {
+  const [month, setMonth] = useState(currentMonth);
+  const [branch, setBranch] = useState('');
+  const [data, setData] = useState(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [reload, setReload] = useState(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    setError('');
+    setData(null);
+    fetch('/api/larousse?' + new URLSearchParams({ month, ...(branch ? { branch } : {}) }), {
+      signal: controller.signal, cache: 'no-store',
+    })
+      .then(async (response) => {
+        if (!response.ok) throw Error('No fue posible consultar Finance.');
+        return response.json();
+      })
+      .then((payload) => { if (!controller.signal.aborted) setData(payload); })
+      .catch((reason) => { if (!controller.signal.aborted) setError(reason.message); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [month, branch, reload]);
+
+  const rows = data?.rows || [];
+  const reported = rows.filter((row) => REPORTABLE.has(row.state));
+  const approved = reported.filter((row) => row.state === 'APPROVED');
+  const pending = reported.filter((row) => row.state === 'PENDING_REVIEW');
+  const corrections = reported.filter((row) => row.state === 'CORRECTION_REQUESTED');
+  const historical = rows.filter((row) => row.state === 'HISTORICO_SIN_REVISAR');
+  const summary = summarize(reported);
+  const days = new Set(reported.map((row) => row.date)).size;
+  const dailyAverage = days > 0 ? summary.knownNet / BigInt(days) : null;
+  const expenses = summary.expenses;
+  const selectedTitle = monthTitle(month);
+
+  return (
+    <div className="lr2">
+      <header className="lr2-header">
+        <div>
+          <div className="lr2-eyebrow">LA ROUSSE / INTELIGENCIA COMERCIAL</div>
+          <h1>Desempeño comercial</h1>
+          <p>Ventas y operación · {selectedTitle}</p>
+        </div>
+        <div className="lr2-controls">
+          <label>
+            <span>Período</span>
+            <input type="month" aria-label="Mes financiero" value={month}
+              onChange={(event) => { if (event.target.value) setMonth(event.target.value); }} />
+          </label>
+          <label>
+            <span>Sucursal</span>
+            <select value={branch} aria-label="Sucursal financiera"
+              onChange={(event) => setBranch(event.target.value)}>
+              <option value="">Todas las sucursales</option>
+              {(data?.branches || []).map((source) => (
+                <option key={source.id} value={source.id}>{source.name}</option>
+              ))}
+            </select>
+          </label>
+          <button type="button" onClick={() => setReload((value) => value + 1)}>Actualizar</button>
+        </div>
+      </header>
+
+      {loading ? (
+        <div className="lr2-loading" role="status">Consultando datos financieros…</div>
+      ) : error ? (
+        <div className="lr2-loading lr2-error" role="alert">
+          {error} <button type="button" onClick={() => setReload((value) => value + 1)}>Reintentar</button>
+        </div>
+      ) : data ? (
+        <>
+          <div className="lr2-updated">
+            <span className="lr2-live-dot" /> Finance · Consulta: {new Date(data.queried_at).toLocaleString('es-MX', { timeZone: 'America/Mexico_City' })}
+          </div>
+
+          <section className="lr2-overview" aria-label="Indicadores comerciales principales">
+            <MoneyCard label="Venta neta reportada" summary={summary} main
+              note="Cortes enviados por sucursales · incluye importes aún no aprobados" />
+            <div className="lr2-side-metrics">
+              <article className="lr2-metric">
+                <span className="lr2-metric-label">Promedio por día con corte</span>
+                <strong className="lr2-metric-value">{dailyAverage === null ? '—' : money(dailyAverage)}</strong>
+                <span className="lr2-metric-foot">
+                  {days === 0 ? 'Sin cortes reportados' : days + ' días con corte' + (summary.net === null ? ' · subtotal parcial' : '')}
+                </span>
+              </article>
+              <article className="lr2-metric">
+                <span className="lr2-metric-label">Gastos registrados en cortes</span>
+                <strong className="lr2-metric-value">{expenses === null ? 'No disponible' : money(expenses)}</strong>
+                <span className="lr2-metric-foot">No representa el gasto total de Finance</span>
+              </article>
+            </div>
+          </section>
+
+          <div className="lr2-contract-note" role="note">
+            <div><strong>Meta mensual, avance contra meta y ticket promedio</strong>
+              <p>Finance ya registra metas y tickets, pero el contrato de consulta BI actual todavía no los entrega. No se muestran valores estimados.</p>
+            </div>
+            <a href={LOOKER_LEGACY} target="_blank" rel="noreferrer">Ver reporte anterior</a>
+          </div>
+
+          <div className="lr2-analysis">
+            <DailySales rows={reported} />
+            <BranchSales branches={data.branches} reported={reported} />
+          </div>
+
+          <BranchTable branches={data.branches} reported={reported} />
+
+          <aside className="lr2-audit" aria-label="Seguimiento de auditoría de cortes">
+            <span className="lr2-audit-heading">Auditoría Finance · {selectedTitle}</span>
+            <strong>{approved.length} aprobados</strong>
+            <span>{pending.length} pendientes · {corrections.length} en corrección</span>
+            <span>{historical.length} históricos sin revisar (fuera de las ventas netas)</span>
+          </aside>
+        </>
+      ) : null}
+    </div>
+  );
+}
