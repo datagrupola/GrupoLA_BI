@@ -1,1 +1,9 @@
-{"git":{"deploymentEnabled":{"feat/la-rousse-financial-dashboard-v1-20261107":false,"fix/la-rousse-bi-mobile-20261107":false}}}
+{
+  "git": {
+    "deploymentEnabled": {
+      "feat/la-rousse-financial-dashboard-v1-20261107": false,
+      "fix/la-rousse-bi-mobile-20261107": false,
+      "feat/la-rousse-commercial-bi-v2-20261107": false
+    }
+  }
+}
