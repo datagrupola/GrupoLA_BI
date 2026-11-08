@@ -27,7 +27,33 @@ function Card({ label, value, note, hero = false }) {
     <article className={hero ? "lr2-hero" : "lr2-metric"}>
       <span className="lr2-metric-label">{label}</span>
       <strong className="lr2-metric-value">{value}</strong>
-      <span className="lr2-metric-foot">{note}</span>
+      {note && <span className="lr2-metric-foot">{note}</span>}
+    </article>
+  );
+}
+function visualProgress(net, target) {
+  if (net === null || target === null || target <= 0n) return null;
+  const value = net * 10000n / target;
+  return Number(value > 10000n ? 10000n : value) / 100;
+}
+function GoalProgress({ metrics }) {
+  const width = visualProgress(metrics.fullNet, metrics.target);
+  const label = percent(metrics.fullNet, metrics.target);
+  return (
+    <article className="lr4-goal" aria-label="Avance contra meta">
+      <div className="lr4-goal-head"><span>Avance contra meta</span><strong>{label}</strong></div>
+      <div className={"lr4-track" + (width === null ? " lr4-track-empty" : "")}
+        role={width === null ? undefined : "progressbar"}
+        aria-label="Cumplimiento de la meta"
+        aria-valuemin={width === null ? undefined : 0}
+        aria-valuemax={width === null ? undefined : 100}
+        aria-valuenow={width === null ? undefined : width}
+        aria-valuetext={label}>
+        {width !== null && <span style={{ width: width + "%" }} />}
+      </div>
+      <small>{metrics.remaining === null ? "No disponible con datos parciales" :
+        metrics.remaining === 0n ? "Meta alcanzada" :
+        <>Faltan <strong>{money(metrics.remaining)}</strong></>}</small>
     </article>
   );
 }
@@ -41,9 +67,7 @@ function Daily({ rows }) {
   return (
     <section className="lr2-panel">
       <h2>Evolución diaria de ventas</h2>
-      <p className="lr3-note">
-        Venta neta comercial acreditada · por fecha operativa
-      </p>
+      
       {!daily.length && (
         <p className="lr2-empty">
           No hay cortes comerciales comparables para mostrar.
@@ -121,22 +145,19 @@ function Branches({ data, selected, overall }) {
   return (
     <section className="lr2-panel">
       <h2>Desempeño por sucursal</h2>
-      <p className="lr3-note">
-        Orden por venta acreditada disponible. Con cobertura parcial, no es un
-        ranking definitivo del mes.
-      </p>
+      {!overall.complete && <p className="lr3-note">Ranking parcial: hay registros sin venta neta comparable.</p>}
       <div className="lr2-table-scroll">
         <table>
           <thead>
             <tr>
               <th>Sucursal</th>
-              <th>Venta neta acreditada</th>
-              <th>Meta mensual</th>
+              <th>Venta neta</th>
+              <th>Meta</th>
               <th>Avance</th>
               <th>Faltante</th>
-              <th>Participación en selección</th>
-              <th>Cobertura de registros</th>
-              <th>Tickets comerciales</th>
+              <th>Participación</th>
+              <th>Cobertura</th>
+              <th>Tickets</th>
             </tr>
           </thead>
           <tbody>
@@ -150,7 +171,12 @@ function Branches({ data, selected, overall }) {
                   {!b.m.complete && <small> Parcial</small>}
                 </td>
                 <td>{money(b.m.target)}</td>
-                <td>{percent(b.m.fullNet, b.m.target)}</td>
+                <td><div className="lr4-mini-progress">
+                  <div className={"lr4-track" + (visualProgress(b.m.fullNet, b.m.target) === null ? " lr4-track-empty" : "")}>
+                    {visualProgress(b.m.fullNet, b.m.target) !== null && <span style={{ width: visualProgress(b.m.fullNet, b.m.target) + "%" }} />}
+                  </div>
+                  <strong>{percent(b.m.fullNet, b.m.target)}</strong>
+                </div></td>
                 <td>{money(b.m.remaining)}</td>
                 <td>
                   {percent(
@@ -174,8 +200,8 @@ function History({ data, selected, rows }) {
   if (!rows.length) return null;
   const sum = summarize(rows);
   return (
-    <section className="lr2-panel lr3-history">
-      <h2>Información histórica</h2>
+    <details className="lr2-panel lr3-history lr4-historical">
+      <summary>Histórico AppSheet · {rows.length} cortes</summary>
       <p>
         {rows.length} registros de origen histórico;{" "}
         {rows.filter((r) => r.state === "HISTORICO_SIN_REVISAR").length} sin
@@ -222,7 +248,7 @@ function History({ data, selected, rows }) {
           </tbody>
         </table>
       </div>
-    </section>
+    </details>
   );
 }
 export default function LaRousseDashboard() {
@@ -266,25 +292,18 @@ export default function LaRousseDashboard() {
     return () => controller.abort();
   }, [month, branch, reload]);
   const rows = data?.rows || [],
-    m = commercialMetrics(rows, data?.targets || []),
-    coverage = m.sales.known + "/" + rows.length,
-    period = new Intl.DateTimeFormat("es-MX", {
-      year: "numeric",
-      month: "long",
-      timeZone: "UTC",
-    }).format(new Date(month + "-01T00:00:00Z"));
+    m = commercialMetrics(rows, data?.targets || []);
   return (
-    <div className="lr2 lr3">
+    <div className="lr2 lr3 lr4">
       <style>{styles}</style>
       <header className="lr2-header">
         <div>
-          <div className="lr2-eyebrow">LA ROUSSE / INTELIGENCIA COMERCIAL</div>
-          <h1>Desempeño comercial</h1>
-          <p>Ventas y metas · {period}</p>
+          <div className="lr2-eyebrow">LA ROUSSE</div>
+          <h1>Ventas y desempeño</h1>
         </div>
         <div className="lr2-controls">
           <label>
-            <span>Período</span>
+            <span>Mes</span>
             <input
               aria-label="Mes financiero"
               type="month"
@@ -324,77 +343,20 @@ export default function LaRousseDashboard() {
       ) : (
         data && (
           <>
-            <div className="lr2-updated">
-              Finance · Consulta:{" "}
-              {new Date(data.queried_at).toLocaleString("es-MX", {
-                timeZone: "America/Mexico_City",
-              })}
-            </div>
-            <section
-              className="lr3-kpis"
-              aria-label="Indicadores comerciales principales"
-            >
-              <Card
-                hero
-                label="Venta neta acumulada"
-                value={
-                  m.sales.known ? money(m.sales.knownNet) : "No disponible"
-                }
-                note={
-                  (m.complete
-                    ? "Venta comercial reportada"
-                    : "Subtotal comercial disponible · parcial") +
-                  " · " +
-                  coverage +
-                  " registros recibidos con importe acreditado"
-                }
-              />
-              <Card
-                label="Meta mensual"
-                value={money(m.target)}
-                note={
-                  m.targetKnown +
-                  "/" +
-                  data.targets.length +
-                  " sucursales con meta"
-                }
-              />
-              <Card
-                label="Avance contra meta"
-                value={percent(m.fullNet, m.target)}
-                note={
-                  m.complete
-                    ? "Sobre venta neta comercial"
-                    : "Cobertura incompleta: no se calcula cumplimiento"
-                }
-              />
-              <Card
-                label="Faltante para la meta"
-                value={money(m.remaining)}
-                note={
-                  m.remaining === null
-                    ? "No comparable con una venta mensual incompleta"
-                    : "Máximo de meta menos venta, o cero"
-                }
-              />
-              <Card
-                label="Ticket promedio comercial"
-                value={money(m.average)}
-                note={
-                  m.commercial.length +
-                  " cortes comerciales · misma población de ventas y tickets"
-                }
-              />
-              <Card
-                label="Cantidad de tickets comerciales"
-                value={number(m.tickets.value)}
-                note={
-                  m.tickets.known +
-                  "/" +
-                  m.tickets.count +
-                  " cortes comerciales con tickets"
-                }
-              />
+            {rows.length > 0 && !m.complete && <p className="lr4-coverage">Datos parciales: el cumplimiento del mes no se calcula con importes históricos sin venta neta validada.</p>}
+            <section className="lr4-lead" aria-label="Indicadores principales">
+              <Card hero label="Venta neta"
+                value={m.sales.known ? money(m.sales.knownNet) : "No disponible"}
+                note={!m.complete && rows.length ? "Subtotal disponible · excluye históricos" : null} />
+              <Card label="Meta mensual" value={money(m.target)}
+                note={m.targetKnown < data.targets.length ? "Faltan metas por configurar" : null} />
+              <GoalProgress metrics={m} />
+            </section>
+            <section className="lr4-activity" aria-label="Indicadores de tienda">
+              <Card label="Ticket promedio" value={money(m.average)} />
+              <Card label="Tickets" value={number(m.tickets.value)} />
+              <Card label="Afluencia" value={number(m.footfall.value)} />
+              <Card label="Piezas vendidas" value={number(m.pieces.value)} />
             </section>
             {!rows.length ? (
               <div role="status" className="lr2-empty">
@@ -404,31 +366,6 @@ export default function LaRousseDashboard() {
               <>
                 <Daily rows={m.commercial} />
                 <Branches data={data} selected={branch} overall={m} />
-                <section
-                  className="lr3-activity"
-                  aria-label="Indicadores operativos"
-                >
-                  <Card
-                    label="Afluencia comercial"
-                    value={number(m.footfall.value)}
-                    note={
-                      m.footfall.known +
-                      "/" +
-                      m.footfall.count +
-                      " cortes comerciales"
-                    }
-                  />
-                  <Card
-                    label="Piezas vendidas comerciales"
-                    value={number(m.pieces.value)}
-                    note={
-                      m.pieces.known +
-                      "/" +
-                      m.pieces.count +
-                      " cortes comerciales"
-                    }
-                  />
-                </section>
                 <History data={data} selected={branch} rows={m.historical} />
               </>
             )}
@@ -437,7 +374,7 @@ export default function LaRousseDashboard() {
               aria-label="Auditoría de cortes por Finance"
             >
               <span className="lr2-audit-heading">
-                Auditoría de cortes por Finance · {period}
+                Revisión de cortes
               </span>
               <span>
                 Venta neta confirmada: {money(m.confirmed.net)} ·{" "}
