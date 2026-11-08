@@ -174,7 +174,7 @@ function DailySeries({ rows, indicator, selectedDate, setSelectedDate }) {
   }
   const daily = dailyCommercialMetrics(rows, dates);
   const known = daily.filter((day) => day[indicator] !== null);
-  const selected = daily.find((day) => day.date === selectedDate && day[indicator] !== null)
+  const selected = daily.find((day) => day.date === selectedDate)
     || known[known.length - 1] || daily[daily.length - 1];
   const maxKnown = known.reduce(
     (high, day) => day[indicator] > high ? day[indicator] : high, 0n
