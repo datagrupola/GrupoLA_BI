@@ -9,8 +9,6 @@ import {
   percent,
   sumUnits,
 } from "../lib/larousse-commercial.mjs";
-const LOOKER =
-  "https://datastudio.google.com/reporting/055e6005-5133-498d-8a93-4960dbc60f1b";
 const number = (n) =>
   n === null ? "No disponible" : n.toLocaleString("es-MX");
 function currentMonth() {
@@ -525,10 +523,8 @@ export default function LaRousseDashboard() {
           </>
         )
       )}
-      <footer className="lr3-footer">
-        <a href={LOOKER} target="_blank" rel="noreferrer">
-          Ver reporte de Looker
-        </a>
+      <footer className="lr3-footer" aria-label="Fuente del dashboard">
+        <span>Grupo LA BI · La Rousse · Información comercial de Finance</span>
       </footer>
     </div>
   );
