@@ -51,7 +51,7 @@ function GoalProgress({ metrics }) {
         aria-valuetext={label}>
         {width !== null && <span style={{ width: width + "%" }} />}
       </div>
-      <small>{metrics.remaining === null ? "No disponible con datos parciales" :
+      <small>{metrics.remaining === null ? "Sin datos suficientes para calcular el avance" :
         metrics.remaining === 0n ? "Meta alcanzada" :
         <>Faltan <strong>{money(metrics.remaining)}</strong></>}</small>
     </article>
@@ -99,6 +99,8 @@ function Daily({ rows }) {
           ))}
         </div>
       </div>
+      <details className="lr4-daily-detail">
+        <summary>Ver detalle diario</summary>
       <div className="lr2-table-scroll">
         <table>
           <thead>
@@ -121,6 +123,7 @@ function Daily({ rows }) {
           </tbody>
         </table>
       </div>
+      </details>
     </section>
   );
 }
@@ -343,7 +346,7 @@ export default function LaRousseDashboard() {
       ) : (
         data && (
           <>
-            {rows.length > 0 && !m.complete && <p className="lr4-coverage">Datos parciales: el cumplimiento del mes no se calcula con importes históricos sin venta neta validada.</p>}
+            {rows.length > 0 && !m.complete && <p className="lr4-coverage">Venta mensual incompleta: no se calcula el avance hasta tener datos comparables de todas las sucursales.</p>}
             <section className="lr4-lead" aria-label="Indicadores principales">
               <Card hero label="Venta neta"
                 value={m.sales.known ? money(m.sales.knownNet) : "No disponible"}
@@ -377,7 +380,7 @@ export default function LaRousseDashboard() {
                 Revisión de cortes
               </span>
               <span>
-                Venta neta confirmada: {money(m.confirmed.net)} ·{" "}
+                Venta aprobada: {money(m.confirmed.net)} ·{" "}
                 {m.confirmed.known}/{m.confirmed.count} cortes aprobados con
                 importe
               </span>
@@ -394,7 +397,7 @@ export default function LaRousseDashboard() {
       )}
       <footer className="lr3-footer">
         <a href={LOOKER} target="_blank" rel="noreferrer">
-          Consultar Looker anterior
+          Ver reporte de Looker
         </a>
       </footer>
     </div>
