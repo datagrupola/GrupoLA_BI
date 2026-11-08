@@ -5,8 +5,8 @@ export default async function LoginPage({ searchParams }) {
   return (
     <main className="password-gate">
       <section className="password-card">
-        <h1>Acceso restringido</h1>
-        <p>Ingresa la contraseña para acceder al panel de BI.</p>
+        <h1>Grupo LA BI</h1>
+        <p>Accede al dashboard comercial de La Rousse.</p>
 
         <form id="password-form" action="/api/login" method="POST">
           <input
