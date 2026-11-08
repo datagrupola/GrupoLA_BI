@@ -251,8 +251,8 @@ button, input { font: inherit; }
 .lr4 .lr2-header h1{font-size:clamp(26px,2.6vw,34px)}
 .lr4-lead{display:grid;grid-template-columns:minmax(0,1.23fr) minmax(0,.95fr) minmax(0,1.25fr);gap:14px;margin:0 0 14px}
 .lr4-lead .lr2-hero,.lr4-lead .lr2-metric{min-height:166px;justify-content:space-between}
-.lr4-lead .lr2-hero{padding:23px}
-.lr4-lead .lr2-hero strong{font-size:clamp(28px,3vw,40px)}
+.lr4-lead .lr2-hero{padding:23px;container-type:inline-size}
+.lr4-lead .lr2-hero strong{font-size:clamp(20px,12cqi,40px);white-space:nowrap}
 .lr4-lead .lr2-metric{padding:21px}
 .lr4-lead .lr2-metric strong{font-size:clamp(23px,2.4vw,30px)}
 .lr4-activity{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:0 0 21px}
@@ -288,7 +288,6 @@ button, input { font: inherit; }
 .lr4-lead{grid-template-columns:1fr}
 .lr4-goal{grid-column:auto;min-height:147px}
 .lr4-lead .lr2-hero,.lr4-lead .lr2-metric{min-height:132px}
-.lr4-lead .lr2-hero strong{font-size:34px}
 .lr4-goal-head>strong{font-size:29px}
 .lr4-activity{gap:10px}
 .lr4-activity .lr2-metric{padding:15px;min-height:103px}
