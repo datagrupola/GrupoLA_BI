@@ -58,75 +58,150 @@ function GoalProgress({ metrics }) {
   );
 }
 function Daily({ rows }) {
-  const dates = [...new Set(rows.map((r) => r.date))].sort(),
-    daily = dates.map((date) => ({
+  const [selectedDate, setSelectedDate] = useState(null);
+  const observedDates = [...new Set(rows.map((row) => row.date))].sort();
+  const dates = [];
+  if (observedDates.length) {
+    const cursor = new Date(observedDates[0] + "T00:00:00Z");
+    const last = new Date(observedDates[observedDates.length - 1] + "T00:00:00Z").getTime();
+    while (cursor.getTime() <= last) {
+      dates.push(cursor.toISOString().slice(0, 10));
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
+    }
+  }
+  // Missing dates and incomplete reports are gaps, never zero-valued sales.
+  const daily = dates.map((date) => {
+    const dayRows = rows.filter((row) => row.date === date);
+    return {
       date,
-      ...summarize(rows.filter((r) => r.date === date)),
-    })),
-    max = daily.reduce((s, d) => (d.net !== null && d.net > s ? d.net : s), 1n);
+      ...(dayRows.length ? summarize(dayRows) : { count: 0, known: 0, net: null }),
+    };
+  });
+  const known = daily.filter((day) => day.net !== null);
+  const selected = daily.find((day) => day.date === selectedDate)
+    || known[known.length - 1] || daily[daily.length - 1];
+  const maxKnown = known.reduce((high, day) => day.net > high ? day.net : high, 0n);
+  const chartMax = maxKnown > 0n ? maxKnown : 100n;
+  const chartWidth = Math.max(700, daily.length * 42);
+  const chartHeight = 280;
+  const left = 100, right = 24, top = 16, bottom = 39;
+  const chartBase = chartHeight - bottom;
+  const chartInnerHeight = chartBase - top;
+  const pointX = (index) => left + (daily.length === 1 ? (chartWidth - left - right) / 2 :
+    index * (chartWidth - left - right) / (daily.length - 1));
+  const pointY = (amount) => chartBase -
+    Number(amount * BigInt(chartInnerHeight) / chartMax);
+  const points = daily.map((day, index) => ({
+    ...day, x: pointX(index), y: day.net === null ? null : pointY(day.net),
+  }));
+  const segments = [];
+  let current = [];
+  for (const point of points) {
+    if (point.y === null) {
+      if (current.length) segments.push(current);
+      current = [];
+    } else {
+      current.push(point);
+    }
+  }
+  if (current.length) segments.push(current);
+  const axisMoney = (amount) => new Intl.NumberFormat("es-MX", {
+    style: "currency", currency: "MXN", notation: "compact", maximumFractionDigits: 1,
+  }).format(Number(amount) / 100);
+  const dayLabel = (date) => date
+    ? new Intl.DateTimeFormat("es-MX", {
+        day: "numeric", month: "short", year: "numeric", timeZone: "UTC",
+      }).format(new Date(date + "T00:00:00Z"))
+    : "";
+  const tickStep = Math.max(1, Math.ceil(points.length / 11));
   return (
-    <section className="lr2-panel">
+    <section className="lr2-panel lr6-daily">
       <h2>Evolución diaria de ventas</h2>
-      
-      {!daily.length && (
-        <p className="lr2-empty">
-          No hay cortes comerciales comparables para mostrar.
-        </p>
-      )}
-      <div className="lr2-chart-scroll">
-        <div
-          className="lr3-chart"
-          style={{ minWidth: Math.max(320, dates.length * 124) }}
-        >
-          {daily.map((d) => (
-            <div key={d.date} className="lr3-day">
-              <strong className="lr5-day-amount" title={d.date + " · " + money(d.net)}>
-                {d.net === null ? "N/D" : money(d.net)}
-              </strong>
-              <div
-                className="lr3-bar-slot"
-                title={d.date + " · " + money(d.net)}
-              >
-                {d.net !== null ? (
-                  <span
-                    style={{
-                      height: Number((d.net * 10000n) / max) / 100 + "%",
-                    }}
-                  />
-                ) : (
-                  <small>ND</small>
-                )}
-              </div>
-              <span>{d.date.slice(8)}</span>
+      {!daily.length ? (
+        <p className="lr2-empty">No hay cortes comerciales comparables para mostrar.</p>
+      ) : (
+        <>
+          <div className="lr6-selected">
+            <div>
+              <span>Venta neta del día</span>
+              <strong>{money(selected.net)}</strong>
             </div>
-          ))}
-        </div>
-      </div>
-      <details className="lr4-daily-detail">
-        <summary>Ver detalle diario</summary>
-      <div className="lr2-table-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Venta neta</th>
-              <th>Cobertura</th>
-            </tr>
-          </thead>
-          <tbody>
-            {daily.map((d) => (
-              <tr key={d.date}>
-                <td>{d.date}</td>
-                <td>{money(d.net)}</td>
-                <td>
-                  {d.known}/{d.count}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      </details>
+            <time dateTime={selected.date}>{dayLabel(selected.date)}</time>
+          </div>
+          <div className="lr6-scroll" role="region" aria-label="Gráfica de ventas diarias" tabIndex={0}>
+            <svg className="lr6-chart" width={chartWidth} height={chartHeight}
+              viewBox={"0 0 " + chartWidth + " " + chartHeight}
+              role="group" aria-label="Serie temporal de ventas netas diarias">
+              {Array.from({ length: 5 }, (_, i) => {
+                const amount = chartMax * BigInt(4 - i) / 4n;
+                const y = top + (chartInnerHeight * i) / 4;
+                return (
+                  <g key={"tick-" + i}>
+                    <line className="lr6-grid" x1={left} y1={y}
+                      x2={chartWidth - right} y2={y} />
+                    <text className="lr6-axis" textAnchor="end" x={left - 12} y={y + 4}>
+                      {axisMoney(amount)}
+                    </text>
+                  </g>
+                );
+              })}
+              {points.map((point, index) =>
+                index % tickStep === 0 || index === points.length - 1 ? (
+                  <text key={"date-" + point.date} className="lr6-axis"
+                    x={point.x} y={chartHeight - 11} textAnchor="middle">
+                    {point.date.slice(8)}
+                  </text>
+                ) : null
+              )}
+              {segments.map((segment, index) =>
+                segment.length > 1 ? (
+                  <polyline key={"segment-" + index} className="lr6-series"
+                    points={segment.map((point) => point.x + "," + point.y).join(" ")}
+                    fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                ) : null
+              )}
+              {points.filter((point) => point.y !== null).map((point) => (
+                <g key={point.date} role="button" tabIndex={0}
+                  aria-label={dayLabel(point.date) + ": " + money(point.net)}
+                  aria-pressed={selected.date === point.date}
+                  onMouseEnter={() => setSelectedDate(point.date)}
+                  onFocus={() => setSelectedDate(point.date)}
+                  onClick={() => setSelectedDate(point.date)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setSelectedDate(point.date);
+                    }
+                  }}>
+                  <circle cx={point.x} cy={point.y} r={16} fill="transparent" />
+                  <circle className={selected.date === point.date ? "lr6-dot lr6-dot-active" : "lr6-dot"}
+                    cx={point.x} cy={point.y} r={selected.date === point.date ? 6 : 4.5} />
+                  <title>{dayLabel(point.date) + " · " + money(point.net)}</title>
+                </g>
+              ))}
+            </svg>
+          </div>
+          {daily.some((day) => day.net === null) &&
+            <p className="lr6-gap-note">Los días sin venta neta comparable se muestran como interrupciones de la línea.</p>}
+          <details className="lr4-daily-detail">
+            <summary>Ver detalle diario</summary>
+            <div className="lr2-table-scroll">
+              <table>
+                <thead><tr><th>Fecha</th><th>Venta neta</th><th>Cobertura</th></tr></thead>
+                <tbody>
+                  {daily.map((day) => (
+                    <tr key={day.date}>
+                      <td>{day.date}</td>
+                      <td>{money(day.net)}</td>
+                      <td>{day.known}/{day.count}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </>
+      )}
     </section>
   );
 }
@@ -406,4 +481,29 @@ export default function LaRousseDashboard() {
     </div>
   );
 }
-const styles = `.lr3-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0 24px}.lr3-kpis .lr2-hero{grid-column:auto;min-height:170px}.lr3-kpis .lr2-metric-value{font-size:clamp(22px,2.4vw,36px);overflow-wrap:anywhere}.lr3-kpis .lr2-metric{min-height:140px}.lr3 .lr2-panel{margin-bottom:20px}.lr3-note{font-size:12px;color:#64748b;margin:8px 0 18px}.lr3-activity{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:20px 0}.lr3-history{background:#fffaf0;border-color:#e8d7af}.lr3-history p{font-size:13px;line-height:1.8;margin:12px 0}.lr3-chart{display:flex;gap:8px;height:244px;align-items:end;margin:14px 0}.lr3-day{flex:1;min-width:116px;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:11px;text-align:center;color:#64748b}.lr5-day-amount{min-height:18px;font-size:11px;font-weight:800;line-height:18px;white-space:nowrap;color:#26425f;font-variant-numeric:tabular-nums}.lr3-bar-slot{height:179px;width:100%;display:flex;align-items:end;justify-content:center}.lr3-bar-slot>span{display:block;background:#2155a0;max-width:28px;width:80%;border-radius:5px 5px 0 0}.lr3-footer{padding:16px 0;font-size:12px}.lr3-footer a{color:#345b96}@media(max-width:1000px){.lr3-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.lr3-activity{grid-template-columns:1fr 1fr}}@media(max-width:600px){.lr3-kpis,.lr3-activity{grid-template-columns:1fr}.lr3-kpis .lr2-hero{grid-column:auto}.lr3 .lr2-metric-value{font-size:26px;overflow-wrap:anywhere}}`;
+const styles = `.lr3-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0 24px}.lr3-kpis .lr2-hero{grid-column:auto;min-height:170px}.lr3-kpis .lr2-metric-value{font-size:clamp(22px,2.4vw,36px);overflow-wrap:anywhere}.lr3-kpis .lr2-metric{min-height:140px}.lr3 .lr2-panel{margin-bottom:20px}.lr3-note{font-size:12px;color:#64748b;margin:8px 0 18px}.lr3-activity{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:20px 0}.lr3-history{background:#fffaf0;border-color:#e8d7af}.lr3-history p{font-size:13px;line-height:1.8;margin:12px 0}.lr3-footer{padding:16px 0;font-size:12px}.lr3-footer a{color:#345b96}@media(max-width:1000px){.lr3-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.lr3-activity{grid-template-columns:1fr 1fr}}@media(max-width:600px){.lr3-kpis,.lr3-activity{grid-template-columns:1fr}.lr3-kpis .lr2-hero{grid-column:auto}.lr3 .lr2-metric-value{font-size:26px;overflow-wrap:anywhere}}
+.lr6-daily{min-width:0}
+.lr6-selected{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin:5px 0 14px}
+.lr6-selected>div{display:flex;flex-direction:column;gap:4px}
+.lr6-selected span{font-size:11px;font-weight:700;color:#748398}
+.lr6-selected strong{font-size:clamp(22px,2.6vw,31px);font-weight:850;letter-spacing:-.04em;color:#1d395b;font-variant-numeric:tabular-nums}
+.lr6-selected time{font-size:12px;color:#73839a;font-weight:700;text-transform:capitalize}
+.lr6-scroll{width:100%;overflow-x:auto;overflow-y:hidden;border:1px solid #e7edf5;border-radius:12px;background:linear-gradient(#fff,#fcfdff);padding:8px 6px 4px;scrollbar-width:thin}
+.lr6-scroll:focus-visible{outline:2px solid #2563eb;outline-offset:3px}
+.lr6-chart{display:block;max-width:none}
+.lr6-grid{stroke:#e9eff6;stroke-width:1;stroke-dasharray:3 5}
+.lr6-axis{font-size:11px;fill:#7a8ba1;font-weight:600;font-variant-numeric:tabular-nums}
+.lr6-series{stroke:#246bad;stroke-width:3.2;vector-effect:non-scaling-stroke}
+.lr6-dot{fill:#fff;stroke:#246bad;stroke-width:3;cursor:pointer}
+.lr6-dot-active{fill:#246bad;stroke:#fff;stroke-width:2;filter:drop-shadow(0 0 3px rgba(36,107,173,.45))}
+.lr6-chart g[role="button"]:focus-visible .lr6-dot{stroke:#0d9b80;stroke-width:4}
+.lr6-gap-note{font-size:11px;line-height:1.5;color:#8d691b;margin:11px 0 4px}
+.lr6-daily .lr4-daily-detail{margin-top:12px}
+.lr6-daily .lr4-daily-detail summary{font-size:12px;font-weight:700;color:#2c5b91;cursor:pointer}
+.lr6-daily .lr4-daily-detail .lr2-table-scroll{margin-top:10px}
+@media(max-width:700px){
+.lr6-selected strong{font-size:26px}
+.lr6-selected{gap:8px}
+.lr6-scroll{padding:5px 0 3px}
+}
+`;
