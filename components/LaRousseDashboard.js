@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { money, summarize } from "../lib/larousse.mjs";
 import { reviewCutCounts } from "../lib/larousse-review.mjs";
 import { dailyCommercialMetrics } from "../lib/larousse-daily.mjs";
+import { comparisonWindows, periodComparison } from "../lib/larousse-comparison.mjs";
 import {
   commercialMetrics,
   commercialCutoffDate,
@@ -159,9 +160,7 @@ const DAILY_OPTIONS = [
   { key: "conversion", label: "Conversión", selectedLabel: "Conversión del día" },
   { key: "piecesPerTicket", label: "Piezas por ticket", selectedLabel: "Piezas por ticket del día" },
 ];
-function Daily({ rows }) {
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [indicator, setIndicator] = useState("net");
+function DailySeries({ rows, indicator, selectedDate, setSelectedDate }) {
   const chosen = DAILY_OPTIONS.find((option) => option.key === indicator) || DAILY_OPTIONS[0];
   const observedDates = [...new Set(rows.map((row) => row.date))].sort();
   const dates = [];
@@ -175,14 +174,14 @@ function Daily({ rows }) {
   }
   const daily = dailyCommercialMetrics(rows, dates);
   const known = daily.filter((day) => day[indicator] !== null);
-  const selected = daily.find((day) => day.date === selectedDate && day[indicator] !== null)
+  const selected = daily.find((day) => day.date === selectedDate)
     || known[known.length - 1] || daily[daily.length - 1];
   const maxKnown = known.reduce(
     (high, day) => day[indicator] > high ? day[indicator] : high, 0n
   );
   const chartMax = maxKnown > 0n ? maxKnown : 100n;
   const chartWidth = Math.max(700, daily.length * 42);
-  const chartHeight = 280;
+  const chartHeight = 250;
   const left = 100, right = 24, top = 16, bottom = 39;
   const chartBase = chartHeight - bottom;
   const chartInnerHeight = chartBase - top;
@@ -226,20 +225,8 @@ function Daily({ rows }) {
     : "";
   const tickStep = Math.max(1, Math.ceil(points.length / 11));
   return (
-    <section className="lr2-panel lr6-daily">
-      <div className="lr9-daily-header">
-        <h2>Evolución diaria</h2>
-        <div className="lr9-indicator-picker" role="group" aria-label="Indicador de evolución diaria">
-          {DAILY_OPTIONS.map((option) => (
-            <button key={option.key} type="button"
-              className={indicator === option.key ? "lr9-indicator-active" : ""}
-              aria-pressed={indicator === option.key}
-              onClick={() => setIndicator(option.key)}>
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </div>
+    <div className="lr10-series" aria-label={"Serie diaria de " + chosen.label.toLowerCase()}>
+      <h3 className="lr10-series-title">{chosen.label}</h3>
       {!daily.length ? (
         <p className="lr2-empty">No hay cortes comerciales comparables para mostrar.</p>
       ) : (
@@ -324,6 +311,125 @@ function Daily({ rows }) {
               </table>
             </div>
           </details>
+        </>
+      )}
+    </div>
+  );
+}
+
+function Daily({ rows }) {
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedIndicators, setSelectedIndicators] = useState(["net"]);
+  const toggleIndicator = (key) => setSelectedIndicators((current) => {
+    if (current.includes(key)) {
+      return current.length > 1 ? current.filter((value) => value !== key) : current;
+    }
+    return [...current, key];
+  });
+  return (
+    <section className="lr2-panel lr6-daily">
+      <div className="lr9-daily-header">
+        <div>
+          <h2>Evolución diaria</h2>
+          <p className="lr10-series-hint">Selecciona una o varias métricas; cada gráfica conserva su propia escala.</p>
+        </div>
+        <div className="lr9-indicator-picker" role="group" aria-label="Indicadores de evolución diaria (selección múltiple)">
+          {DAILY_OPTIONS.map((option) => (
+            <button key={option.key} type="button"
+              className={selectedIndicators.includes(option.key) ? "lr9-indicator-active" : ""}
+              aria-pressed={selectedIndicators.includes(option.key)}
+              onClick={() => toggleIndicator(option.key)}>
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="lr10-series-list">
+        {DAILY_OPTIONS.filter((option) => selectedIndicators.includes(option.key))
+          .map((option) => (
+            <DailySeries key={option.key} rows={rows} indicator={option.key}
+              selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+          ))}
+      </div>
+    </section>
+  );
+}
+
+function CommercialComparison({ comparison, windows, loading, error }) {
+  if (!windows) return (
+    <section className="lr2-panel lr10-comparison">
+      <h2>Comparativo comercial</h2>
+      <p className="lr6-gap-note">Sin fecha de corte global verificable para realizar la comparación.</p>
+    </section>
+  );
+  const formatPeriod = (window) => window.start + " a " + window.end;
+  const formatValue = (metric, value) => {
+    if (value === null) return "No disponible";
+    if (metric.kind === "money") return money(value);
+    if (metric.kind === "units") return number(value);
+    return formatHundredths(value, metric.kind === "ratio-percent" ? "%" : "");
+  };
+  const formatChange = (metric) => {
+    if (metric.change === null) return "No disponible";
+    const absolute = metric.change < 0n ? -metric.change : metric.change;
+    const magnitude = (absolute / 100n).toString() + "." +
+      (absolute % 100n).toString().padStart(2, "0");
+    const sign = metric.change < 0n ? "−" : metric.change > 0n ? "+" : "";
+    const unit = metric.kind === "ratio-percent" ? " pp" :
+      metric.kind === "ratio" ? " piezas/ticket" : "%";
+    return sign + magnitude + unit;
+  };
+  return (
+    <section className="lr2-panel lr10-comparison">
+      <div className="lr10-comparison-title">
+        <div>
+          <h2>Comparativo comercial</h2>
+          <p>{windows.mode === "week" ? "Últimos 7 días vs. 7 días previos" :
+            "Mes a la fecha vs. mismos días del mes anterior"}</p>
+        </div>
+        <small>La parte superior conserva los indicadores del mes seleccionado.</small>
+      </div>
+      {loading ? (
+        <p role="status" className="lr10-comparison-status">Consultando período anterior…</p>
+      ) : error ? (
+        <p role="status" className="lr10-comparison-status">{error}</p>
+      ) : !comparison ? (
+        <p role="status" className="lr10-comparison-status">Comparativo no disponible.</p>
+      ) : (
+        <>
+          <div className="lr10-comparison-coverage">
+            <span>Período actual: <b>{formatPeriod(windows.current)}</b>
+              {" "}({comparison.current.observedPairs}/{comparison.current.expectedPairs} sucursal-días)
+            </span>
+            <span>Anterior: <b>{formatPeriod(windows.previous)}</b>
+              {" "}({comparison.previous.observedPairs}/{comparison.previous.expectedPairs} sucursal-días)
+            </span>
+          </div>
+          {(!comparison.current.complete || !comparison.previous.complete) && (
+            <p className="lr10-comparison-warning" role="status">
+              Cobertura insuficiente o duplicada en alguno de los períodos. Las variaciones sin evidencia
+              comparable se muestran como «No disponible», nunca como cero.
+            </p>
+          )}
+          <div className="lr2-table-scroll">
+            <table className="lr10-comparison-table">
+              <thead>
+                <tr>
+                  <th>Indicador</th><th>Actual</th><th>Anterior</th><th>Variación</th>
+                </tr>
+              </thead>
+              <tbody>
+                {comparison.metrics.map((metric) => (
+                  <tr key={metric.key}>
+                    <th scope="row">{metric.label}</th>
+                    <td>{formatValue(metric, metric.currentValue)}</td>
+                    <td>{formatValue(metric, metric.previousValue)}</td>
+                    <td className="lr10-comparison-delta">{formatChange(metric)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
     </section>
@@ -471,7 +577,11 @@ export default function LaRousseDashboard() {
     [catalog, setCatalog] = useState([]),
     [error, setError] = useState(""),
     [loading, setLoading] = useState(true),
-    [reload, setReload] = useState(0);
+    [reload, setReload] = useState(0),
+    [comparisonMode, setComparisonMode] = useState("none"),
+    [comparisonExtra, setComparisonExtra] = useState(null),
+    [comparisonError, setComparisonError] = useState(""),
+    [comparisonLoading, setComparisonLoading] = useState(false);
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
@@ -514,9 +624,50 @@ export default function LaRousseDashboard() {
       });
     return () => controller.abort();
   }, [month, branch, reload]);
+  const windows = comparisonWindows(month, globalCutoff, comparisonMode);
+  // Fetch only additional month(s) needed for a meaningful week/month comparison.
+  // A separate effect keeps the existing month dashboard usable on comparison errors.
+  useEffect(() => {
+    const controller = new AbortController();
+    setComparisonError("");
+    setComparisonExtra(null);
+    setComparisonLoading(false);
+    if (comparisonMode === "none" || !data || !windows) return () => controller.abort();
+    const missingMonths = windows.months.filter((item) => item !== month);
+    if (!missingMonths.length) {
+      setComparisonExtra({ month, branch, mode: comparisonMode, cutoff: globalCutoff, rows: data.rows });
+      return () => controller.abort();
+    }
+    setComparisonLoading(true);
+    Promise.all(missingMonths.map(async (item) => {
+      const response = await fetch("/api/larousse?" + new URLSearchParams({
+        month: item, version: "2", ...(branch ? { branch } : {}),
+      }), { signal: controller.signal, cache: "no-store" });
+      if (!response.ok) throw Error("No fue posible consultar el período anterior de Finance.");
+      return (await response.json()).rows;
+    })).then((batches) => {
+      if (!controller.signal.aborted) {
+        setComparisonExtra({
+          month, branch, mode: comparisonMode, cutoff: globalCutoff,
+          rows: [...data.rows, ...batches.flat()],
+        });
+      }
+    }).catch((reason) => {
+      if (!controller.signal.aborted) setComparisonError(reason.message);
+    }).finally(() => {
+      if (!controller.signal.aborted) setComparisonLoading(false);
+    });
+    return () => controller.abort();
+  }, [data, month, branch, globalCutoff, comparisonMode, reload]);
   const rows = data?.rows || [],
     m = commercialMetrics(rows, data?.targets || []),
     forecast = commercialProjection(rows, data?.targets || [], month, globalCutoff);
+  const currentComparison = comparisonExtra &&
+    comparisonExtra.month === month && comparisonExtra.branch === branch &&
+    comparisonExtra.mode === comparisonMode && comparisonExtra.cutoff === globalCutoff;
+  const comparison = currentComparison && windows ?
+    periodComparison(comparisonExtra.rows, windows,
+      branch ? [branch] : (data?.targets || []).map((target) => target.branch_id)) : null;
   return (
     <div className="lr2 lr3 lr4 lr7 lr8">
       <style>{styles}</style>
@@ -550,6 +701,15 @@ export default function LaRousseDashboard() {
                   {b.name}
                 </option>
               ))}
+            </select>
+          </label>
+          <label>
+            <span>Comparar con</span>
+            <select aria-label="Comparación temporal global" value={comparisonMode}
+              onChange={(e) => setComparisonMode(e.target.value)}>
+              <option value="none">Sin comparación</option>
+              <option value="week">7 días anteriores</option>
+              <option value="month">Mes anterior (mismos días)</option>
             </select>
           </label>
           <button onClick={() => setReload((x) => x + 1)}>Actualizar</button>
@@ -587,6 +747,11 @@ export default function LaRousseDashboard() {
               <Card label="Piezas por ticket" value={formatHundredths(m.piecesPerTicket)}
                 note={m.piecesPerTicket === null ? "Datos incompletos o tickets cero" : null} />
             </section>
+            {comparisonMode !== "none" && (
+              <CommercialComparison comparison={comparison} windows={windows}
+                loading={comparisonLoading || !currentComparison && !comparisonError && !!windows}
+                error={comparisonError} />
+            )}
             {!rows.length ? (
               <div role="status" className="lr2-empty">
                 Sin cortes para el período y sucursal seleccionados.
