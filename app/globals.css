@@ -415,3 +415,63 @@ button,input,select { font:inherit; }
   .lr9-indicator-picker { width:100%; }
   .lr9-indicator-picker button { flex:1 1 auto; text-align:center; }
 }
+
+/* BI-04 — multi-series synchronized timelines and exact-period comparisons. */
+.lr10-series-hint { margin:4px 0 0; color:#7889a1; font-size:11px; line-height:1.5; }
+.lr10-series-list { display:grid; grid-template-columns:1fr; gap:14px; }
+.lr10-series {
+  min-width:0;
+  padding:16px 17px 14px;
+  border:1px solid #e4ebf4;
+  border-radius:13px;
+  background:#fcfdff;
+}
+.lr10-series-title { margin:0 0 12px; font-size:14px; font-weight:800; color:#254565; }
+.lr10-series .lr6-selected { margin:3px 0 12px; }
+.lr10-series .lr6-selected strong { font-size:clamp(21px,2.35vw,28px); }
+.lr10-comparison { margin-bottom:18px; }
+.lr10-comparison-title {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:8px 16px;
+  margin-bottom:14px;
+}
+.lr10-comparison-title h2 { font-size:17px; font-weight:800; }
+.lr10-comparison-title p { margin-top:5px; color:#71829b; font-size:12px; }
+.lr10-comparison-title small { color:#8393a8; font-size:11px; max-width:280px; line-height:1.5; }
+.lr10-comparison-coverage {
+  display:flex;
+  gap:8px 20px;
+  flex-wrap:wrap;
+  padding:10px 12px;
+  margin-bottom:10px;
+  border-radius:10px;
+  background:#f4f7fb;
+  color:#687b93;
+  font-size:11px;
+  line-height:1.5;
+}
+.lr10-comparison-coverage b { color:#2b4867; }
+.lr10-comparison-warning {
+  background:#fff8e9;
+  color:#815a21;
+  padding:10px 12px;
+  font-size:11px;
+  line-height:1.5;
+  border-radius:8px;
+  margin-bottom:10px;
+}
+.lr10-comparison-status { color:#72839c; font-size:12px; padding:16px 0; }
+.lr10-comparison-table th:first-child { min-width:165px; }
+.lr10-comparison-table tbody th { color:#2f4d72; }
+.lr10-comparison-table td { font-variant-numeric:tabular-nums; }
+.lr10-comparison-table .lr10-comparison-delta { font-weight:800; color:#203f68; }
+@media(max-width:740px) {
+  .lr10-series { padding:14px 10px; }
+  .lr10-series-title { font-size:13px; margin-left:4px; }
+  .lr10-comparison-title small { max-width:none; }
+  .lr10-comparison-table th:first-child { min-width:135px; }
+  .lr2-controls label:has(select[aria-label="Comparación temporal global"]) { min-width:170px; }
+}
