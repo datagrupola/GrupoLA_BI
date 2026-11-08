@@ -98,6 +98,10 @@ function Forecast({ forecast }) {
 }
 function CutReview({ rows, confirmed }) {
   const review = reviewCutCounts(rows);
+  // Keep proportional segments; show a compact fallback only when a segment
+  // is too narrow to display its count legibly (especially on mobile).
+  const approvedInBar = review.approvedPercent >= 30;
+  const pendingInBar = review.awaitingPercent >= 30;
   return (
     <aside className="lr8-review" aria-label="Revisión de cortes por Finance">
       <div className="lr8-review-heading">
@@ -106,35 +110,44 @@ function CutReview({ rows, confirmed }) {
       </div>
       <div className="lr8-review-chart">
         {review.total > 0 ? (
-          <div className="lr8-review-track"
-            role="img"
-            aria-label={`${review.approved} aprobados (${review.approvedPercent.toFixed(1)} %); ${review.awaiting} pendientes de aprobación (${review.awaitingPercent.toFixed(1)} %), incluidos ${review.correction} en corrección`}>
-            {review.approved > 0 && (
-              <span className="lr8-review-approved"
-                style={{ width: review.approvedPercent + "%" }}>
-                {review.approvedPercent >= 17 && <b>{review.approvedPercent.toFixed(1)}%</b>}
-              </span>
+          <>
+            <div className="lr8-review-track"
+              role="img"
+              aria-label={`${review.approved} aprobados; ${review.awaiting} pendientes de aprobación, incluidos ${review.correction} en corrección`}>
+              {review.approved > 0 && (
+                <span className="lr8-review-approved"
+                  style={{ width: review.approvedPercent + "%" }}
+                  title={`${review.approved} aprobados`}>
+                  {approvedInBar && <b>{number(review.approved)} aprobados</b>}
+                </span>
+              )}
+              {review.awaiting > 0 && (
+                <span className="lr8-review-pending"
+                  style={{ width: review.awaitingPercent + "%" }}
+                  title={`${review.awaiting} pendientes`}>
+                  {pendingInBar && <b>{number(review.awaiting)} pendientes</b>}
+                </span>
+              )}
+            </div>
+            {((review.approved > 0 && !approvedInBar) ||
+              (review.awaiting > 0 && !pendingInBar)) && (
+              <p className="lr9-review-fallback">
+                {review.approved > 0 && !approvedInBar && <span>{number(review.approved)} aprobados</span>}
+                {review.awaiting > 0 && !pendingInBar && <span>{number(review.awaiting)} pendientes</span>}
+              </p>
             )}
-            {review.awaiting > 0 && (
-              <span className="lr8-review-pending"
-                style={{ width: review.awaitingPercent + "%" }}>
-                {review.awaitingPercent >= 17 && <b>{review.awaitingPercent.toFixed(1)}%</b>}
-              </span>
-            )}
-          </div>
+          </>
         ) : (
           <div className="lr8-review-empty">Sin cortes OPS comerciales para revisar</div>
         )}
-      </div>
-      <div className="lr8-review-legend">
-        <span><i className="lr8-review-dot approved" aria-hidden="true" />Aprobados <strong>{number(review.approved)}</strong></span>
-        <span><i className="lr8-review-dot pending" aria-hidden="true" />Pendientes <strong>{number(review.awaiting)}</strong></span>
-        {review.correction > 0 && <small>Incluye {review.correction} en corrección</small>}
       </div>
       <p className="lr8-review-foot">
         Venta aprobada: <strong>{money(confirmed.net)}</strong>
         <span aria-hidden="true"> · </span>
         {confirmed.known}/{confirmed.count} cortes aprobados con importe
+        {review.correction > 0 && (
+          <span> · Incluye {review.correction} en corrección</span>
+        )}
       </p>
     </aside>
   );
