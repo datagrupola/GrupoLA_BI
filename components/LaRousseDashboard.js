@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { money, summarize } from "../lib/larousse.mjs";
 import {
   commercialMetrics,
+  commercialCutoffDate,
+  commercialProjection,
+  formatHundredths,
   percent,
   sumUnits,
 } from "../lib/larousse-commercial.mjs";
@@ -54,6 +57,38 @@ function GoalProgress({ metrics }) {
       <small>{metrics.remaining === null ? "Sin datos suficientes para calcular el avance" :
         metrics.remaining === 0n ? "Meta alcanzada" :
         <>Faltan <strong>{money(metrics.remaining)}</strong></>}</small>
+    </article>
+  );
+}
+function Forecast({ forecast }) {
+  const date = (value) => value ? new Intl.DateTimeFormat("es-MX", {
+    day: "numeric", month: "short", year: "numeric", timeZone: "UTC",
+  }).format(new Date(value + "T00:00:00Z")) : "No disponible";
+  return (
+    <article className="lr7-forecast">
+      <span className="lr2-metric-label">Proyección de cierre</span>
+      <strong className="lr7-forecast-value">{money(forecast.projectedNet)}</strong>
+      <div className="lr7-forecast-details">
+        <div><span>Ritmo observado</span><b>{money(forecast.observedDaily)} / día reportado</b></div>
+        <div><span>Corte global</span><b>{date(forecast.globalDate)}</b></div>
+      </div>
+      {forecast.projectedNet !== null && forecast.expectedPairs !== null &&
+        forecast.countedPairs < forecast.expectedPairs && (
+          <small className="lr7-forecast-warning">
+            Cobertura de fechas parcial: {forecast.countedPairs}/{forecast.expectedPairs} sucursal-días registrados.
+          </small>
+        )}
+      {forecast.scopedDate !== null && forecast.globalDate !== null &&
+        forecast.scopedDate < forecast.globalDate && (
+          <small className="lr7-forecast-warning">
+            Último corte de la selección: {date(forecast.scopedDate)}.
+          </small>
+        )}
+      {forecast.projectedNet === null && (
+        <small className="lr7-forecast-warning">
+          Sin proyección comparable o sin fecha global verificada.
+        </small>
+      )}
     </article>
   );
 }
@@ -336,6 +371,7 @@ export default function LaRousseDashboard() {
   const [month, setMonth] = useState(currentMonth),
     [branch, setBranch] = useState(""),
     [data, setData] = useState(null),
+    [globalCutoff, setGlobalCutoff] = useState(null),
     [catalog, setCatalog] = useState([]),
     [error, setError] = useState(""),
     [loading, setLoading] = useState(true),
@@ -345,27 +381,37 @@ export default function LaRousseDashboard() {
     setLoading(true);
     setError("");
     setData(null);
-    fetch(
-      "/api/larousse?" +
-        new URLSearchParams({
-          month,
-          version: "2",
-          ...(branch ? { branch } : {}),
-        }),
-      { signal: controller.signal, cache: "no-store" },
-    )
-      .then(async (r) => {
-        if (!r.ok) throw Error("No fue posible consultar Finance.");
-        return r.json();
-      })
-      .then((d) => {
+    setGlobalCutoff(null);
+    const read = async (scope) => {
+      const response = await fetch(
+        "/api/larousse?" +
+          new URLSearchParams({
+            month,
+            version: "2",
+            ...(scope ? { branch: scope } : {}),
+          }),
+        { signal: controller.signal, cache: "no-store" },
+      );
+      if (!response.ok) throw Error("No fue posible consultar Finance.");
+      return response.json();
+    };
+    // If a branch is selected, independently read the unfiltered month to
+    // obtain the legacy GLOBAL cutoff date. Never substitute branch date.
+    Promise.all([
+      read(branch),
+      branch ? read("").catch(() => null) : Promise.resolve(null),
+    ])
+      .then(([selected, global]) => {
         if (!controller.signal.aborted) {
-          setData(d);
-          setCatalog(d.branches);
+          setData(selected);
+          setCatalog(selected.branches);
+          setGlobalCutoff(commercialCutoffDate(
+            (branch ? global?.rows : selected.rows) || [], month,
+          ));
         }
       })
-      .catch((e) => {
-        if (!controller.signal.aborted) setError(e.message);
+      .catch((reason) => {
+        if (!controller.signal.aborted) setError(reason.message);
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
@@ -373,9 +419,10 @@ export default function LaRousseDashboard() {
     return () => controller.abort();
   }, [month, branch, reload]);
   const rows = data?.rows || [],
-    m = commercialMetrics(rows, data?.targets || []);
+    m = commercialMetrics(rows, data?.targets || []),
+    forecast = commercialProjection(rows, data?.targets || [], month, globalCutoff);
   return (
-    <div className="lr2 lr3 lr4">
+    <div className="lr2 lr3 lr4 lr7">
       <style>{styles}</style>
       <header className="lr2-header">
         <div>
@@ -432,12 +479,17 @@ export default function LaRousseDashboard() {
               <Card label="Meta mensual" value={money(m.target)}
                 note={m.targetKnown < data.targets.length ? "Faltan metas por configurar" : null} />
               <GoalProgress metrics={m} />
+              <Forecast forecast={forecast} />
             </section>
             <section className="lr4-activity" aria-label="Indicadores de tienda">
               <Card label="Ticket promedio" value={money(m.average)} />
               <Card label="Tickets" value={number(m.tickets.value)} />
               <Card label="Afluencia" value={number(m.footfall.value)} />
               <Card label="Piezas vendidas" value={number(m.pieces.value)} />
+              <Card label="Conversión" value={formatHundredths(m.conversion, "%")}
+                note={m.conversion === null ? "Datos incompletos o afluencia cero" : null} />
+              <Card label="Piezas por ticket" value={formatHundredths(m.piecesPerTicket)}
+                note={m.piecesPerTicket === null ? "Datos incompletos o tickets cero" : null} />
             </section>
             {!rows.length ? (
               <div role="status" className="lr2-empty">
@@ -506,4 +558,17 @@ const styles = `.lr3-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1
 .lr6-selected{gap:8px}
 .lr6-scroll{padding:5px 0 3px}
 }
+
+.lr7 .lr4-lead{grid-template-columns:repeat(4,minmax(0,1fr))}
+.lr7 .lr4-activity{grid-template-columns:repeat(3,minmax(0,1fr))}
+.lr7-forecast{display:flex;flex-direction:column;gap:11px;justify-content:space-between;min-width:0;background:#fff;border:1px solid #e3e9f2;border-radius:16px;padding:20px 21px;box-shadow:0 5px 24px rgba(18,45,78,.035)}
+.lr7-forecast-value{font-size:clamp(21px,2.1vw,30px);font-weight:800;letter-spacing:-.045em;line-height:1.2;color:#1d395b;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.lr7-forecast-details{display:grid;gap:7px}
+.lr7-forecast-details>div{display:flex;justify-content:space-between;flex-wrap:wrap;gap:3px 9px;font-size:11px}
+.lr7-forecast-details span{color:#7b899e}
+.lr7-forecast-details b{font-weight:750;color:#38516b;text-align:right}
+.lr7-forecast-warning{display:block;font-size:10px;color:#9a732b;line-height:1.45}
+@media(max-width:1180px){.lr7 .lr4-lead{grid-template-columns:repeat(2,minmax(0,1fr))}.lr7 .lr4-goal{grid-column:auto}.lr7 .lr4-activity{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:800px){.lr7 .lr4-activity{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.lr7 .lr4-lead{grid-template-columns:1fr}.lr7-forecast{min-height:162px}}
 `;
