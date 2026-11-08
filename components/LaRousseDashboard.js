@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { money, summarize } from "../lib/larousse.mjs";
 import { reviewCutCounts } from "../lib/larousse-review.mjs";
 import { dailyCommercialMetrics } from "../lib/larousse-daily.mjs";
+import { datesForTimeline, branchDailyMetrics } from "../lib/larousse-branch-series.mjs";
 import { comparisonWindows, periodComparison } from "../lib/larousse-comparison.mjs";
 import {
   commercialMetrics,
@@ -160,9 +161,9 @@ const DAILY_OPTIONS = [
   { key: "conversion", label: "Conversión", selectedLabel: "Conversión del día" },
   { key: "piecesPerTicket", label: "Piezas por ticket", selectedLabel: "Piezas por ticket del día" },
 ];
-function DailySeries({ rows, indicator, selectedDate, setSelectedDate }) {
+function DailySeries({ rows, indicator, selectedDate, setSelectedDate, calendarDates, dailyData }) {
   const chosen = DAILY_OPTIONS.find((option) => option.key === indicator) || DAILY_OPTIONS[0];
-  const observedDates = [...new Set(rows.map((row) => row.date))].sort();
+  const observedDates = calendarDates || [...new Set(rows.map((row) => row.date))].sort();
   const dates = [];
   if (observedDates.length) {
     const cursor = new Date(observedDates[0] + "T00:00:00Z");
@@ -172,7 +173,7 @@ function DailySeries({ rows, indicator, selectedDate, setSelectedDate }) {
       cursor.setUTCDate(cursor.getUTCDate() + 1);
     }
   }
-  const daily = dailyCommercialMetrics(rows, dates);
+  const daily = dailyData || dailyCommercialMetrics(rows, dates);
   const known = daily.filter((day) => day[indicator] !== null);
   const selected = daily.find((day) => day.date === selectedDate)
     || known[known.length - 1] || daily[daily.length - 1];
@@ -317,15 +318,170 @@ function DailySeries({ rows, indicator, selectedDate, setSelectedDate }) {
   );
 }
 
-function Daily({ rows }) {
+
+const BRANCH_COLORS = ["#246bad", "#b14f69", "#148575", "#a46a20", "#735cb3", "#526d88", "#ad4e29", "#576e25"];
+function BranchComparisonSeries({ indicator, series, branches, dates, selectedDate, setSelectedDate }) {
+  const chosen = DAILY_OPTIONS.find((option) => option.key === indicator) || DAILY_OPTIONS[0];
+  const formatValue = (value) => indicator === "net" ? money(value) :
+    indicator === "footfall" ? number(value) :
+    formatHundredths(value, indicator === "conversion" ? "%" : "");
+  const axisValue = (value) => indicator === "net"
+    ? new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", notation: "compact", maximumFractionDigits: 1 }).format(Number(value) / 100)
+    : indicator === "footfall"
+      ? new Intl.NumberFormat("es-MX", { notation: "compact", maximumFractionDigits: 1 }).format(Number(value))
+      : formatValue(value);
+  const dayLabel = (date) => date ? new Intl.DateTimeFormat("es-MX", {
+    day: "numeric", month: "short", year: "numeric", timeZone: "UTC",
+  }).format(new Date(date + "T00:00:00Z")) : "";
+  const names = new Map(branches.map((branch) => [branch.id, branch.name]));
+  const charts = series.map((item) => ({
+    ...item, name: names.get(item.id) || item.id,
+    color: BRANCH_COLORS[Math.max(0, branches.findIndex((branch) => branch.id === item.id)) % BRANCH_COLORS.length],
+  }));
+  const lastKnown = [...dates].reverse().find((date) =>
+    charts.some((item) => item.days.some((day) => day.date === date && day[indicator] !== null)));
+  const activeDate = selectedDate && dates.includes(selectedDate)
+    ? selectedDate : lastKnown || dates[dates.length - 1];
+  let maximum = 0n;
+  for (const item of charts)
+    for (const day of item.days)
+      if (day[indicator] !== null && day[indicator] > maximum) maximum = day[indicator];
+  const chartMax = maximum > 0n ? maximum : 100n;
+  const chartWidth = Math.max(700, dates.length * 42);
+  const chartHeight = 250;
+  const left = 100, right = 24, top = 16, bottom = 39;
+  const baseY = chartHeight - bottom;
+  const innerHeight = baseY - top;
+  const x = (index) => left + (dates.length === 1 ? (chartWidth - left - right) / 2 :
+    index * (chartWidth - left - right) / (dates.length - 1));
+  const y = (value) => baseY - Number(value * BigInt(innerHeight) / chartMax);
+  const plotted = charts.map((item) => ({
+    ...item,
+    points: item.days.map((day, index) => ({
+      ...day, x: x(index), y: day[indicator] === null ? null : y(day[indicator]),
+    })),
+  }));
+  const paths = (points) => {
+    const segments = [];
+    let group = [];
+    for (const point of points) {
+      if (point.y === null) {
+        if (group.length) segments.push(group);
+        group = [];
+      } else group.push(point);
+    }
+    if (group.length) segments.push(group);
+    return segments;
+  };
+  const tickStep = Math.max(1, Math.ceil(dates.length / 11));
+  return (
+    <div className="lr10-series" aria-label={"Comparación diaria de " + chosen.label.toLowerCase()}>
+      <h3 className="lr10-series-title">{chosen.label}</h3>
+      {!dates.length ? <p className="lr2-empty">No hay cortes comerciales comparables para mostrar.</p> : (
+        <>
+          <div className="lr11-series-meta">
+            <span>{chosen.selectedLabel} · {dayLabel(activeDate)}</span>
+            <div className="lr11-series-legend">
+              {plotted.map((item) => (
+                <div className="lr11-legend-item" key={item.id}>
+                  <span className="lr11-color" style={{ backgroundColor: item.color }} aria-hidden="true" />
+                  <span>{item.name}</span>
+                  <strong>{formatValue(item.days.find((day) => day.date === activeDate)?.[indicator] ?? null)}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="lr6-scroll" role="region"
+            aria-label={"Gráfica comparativa de " + chosen.label.toLowerCase()} tabIndex={0}>
+            <svg className="lr6-chart" width={chartWidth} height={chartHeight}
+              viewBox={"0 0 " + chartWidth + " " + chartHeight}
+              role="group" aria-label={"Series comparativas de " + chosen.label.toLowerCase()}>
+              {Array.from({ length: 5 }, (_, i) => {
+                const amount = chartMax * BigInt(4 - i) / 4n;
+                const axisY = top + (innerHeight * i) / 4;
+                return <g key={"tick-" + i}>
+                  <line className="lr6-grid" x1={left} y1={axisY}
+                    x2={chartWidth - right} y2={axisY} />
+                  <text className="lr6-axis" x={left - 12} y={axisY + 4} textAnchor="end">
+                    {axisValue(amount)}
+                  </text>
+                </g>;
+              })}
+              {dates.map((date, index) =>
+                index % tickStep === 0 || index === dates.length - 1
+                  ? <text key={date} className="lr6-axis" x={x(index)}
+                      y={chartHeight - 11} textAnchor="middle">{date.slice(8)}</text>
+                  : null)}
+              {plotted.flatMap((item) =>
+                paths(item.points).filter((segment) => segment.length > 1)
+                  .map((segment, index) => <polyline key={item.id + "-segment-" + index}
+                    className="lr6-series" style={{ stroke: item.color }}
+                    points={segment.map((point) => point.x + "," + point.y).join(" ")}
+                    fill="none" strokeLinecap="round" strokeLinejoin="round" />))}
+              {plotted.flatMap((item) => item.points.filter((point) => point.y !== null).map((point) => (
+                <g key={item.id + "-" + point.date} role="button" tabIndex={0}
+                  aria-label={item.name + " · " + dayLabel(point.date) + ": " + formatValue(point[indicator])}
+                  aria-pressed={activeDate === point.date}
+                  onMouseEnter={() => setSelectedDate(point.date)}
+                  onFocus={() => setSelectedDate(point.date)}
+                  onClick={() => setSelectedDate(point.date)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setSelectedDate(point.date);
+                    }
+                  }}>
+                  <circle cx={point.x} cy={point.y} r={15} fill="transparent" />
+                  <circle className={activeDate === point.date ? "lr6-dot lr6-dot-active" : "lr6-dot"}
+                    style={{ stroke: item.color, fill: activeDate === point.date ? item.color : "#fff" }}
+                    cx={point.x} cy={point.y} r={activeDate === point.date ? 6 : 4.5} />
+                  <title>{item.name + " · " + dayLabel(point.date) + ": " + formatValue(point[indicator])}</title>
+                </g>
+              )))}
+            </svg>
+          </div>
+          {plotted.some((item) => item.days.some((day) => day[indicator] === null)) &&
+            <p className="lr6-gap-note">Los días sin un corte válido o sin datos completos interrumpen únicamente la serie correspondiente.</p>}
+          <details className="lr4-daily-detail">
+            <summary>Ver detalle diario por sucursal</summary>
+            <div className="lr2-table-scroll">
+              <table>
+                <thead><tr><th>Fecha</th>{plotted.map((item) => <th key={item.id}>{item.name}</th>)}</tr></thead>
+                <tbody>{dates.map((date, index) => <tr key={date}>
+                  <td>{date}</td>
+                  {plotted.map((item) => <td key={item.id}>{formatValue(item.days[index]?.[indicator] ?? null)}</td>)}
+                </tr>)}</tbody>
+              </table>
+            </div>
+          </details>
+        </>
+      )}
+    </div>
+  );
+}
+
+function Daily({ rows, branches, initialBranch }) {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedIndicators, setSelectedIndicators] = useState(["net"]);
+  const [selectedBranches, setSelectedBranches] = useState(
+    () => initialBranch ? [initialBranch] : branches.map((item) => item.id)
+  );
+  const [branchMode, setBranchMode] = useState("consolidated");
+  const [branchSearch, setBranchSearch] = useState("");
+  const selectedIds = branches.map((item) => item.id).filter((id) => selectedBranches.includes(id));
+  const calendarDates = datesForTimeline(rows);
+  const series = branchDailyMetrics(rows, calendarDates, selectedIds, branchMode);
+  const scopedRows = rows.filter((row) => selectedIds.includes(row.branch_id));
   const toggleIndicator = (key) => setSelectedIndicators((current) => {
     if (current.includes(key)) {
       return current.length > 1 ? current.filter((value) => value !== key) : current;
     }
     return [...current, key];
   });
+  const toggleBranch = (id) => setSelectedBranches((current) =>
+    current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  const shownBranches = branches.filter((item) =>
+    item.name.toLocaleLowerCase("es-MX").includes(branchSearch.trim().toLocaleLowerCase("es-MX")));
   return (
     <section className="lr2-panel lr6-daily">
       <div className="lr9-daily-header">
@@ -344,13 +500,57 @@ function Daily({ rows }) {
           ))}
         </div>
       </div>
-      <div className="lr10-series-list">
-        {DAILY_OPTIONS.filter((option) => selectedIndicators.includes(option.key))
-          .map((option) => (
-            <DailySeries key={option.key} rows={rows} indicator={option.key}
-              selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
-          ))}
+      <div className="lr11-controls">
+        <fieldset className="lr11-branch-picker">
+          <legend>Sucursales para las series</legend>
+          <div className="lr11-branch-actions">
+            <input type="search" aria-label="Buscar sucursal en series"
+              placeholder="Buscar sucursal" value={branchSearch}
+              onChange={(event) => setBranchSearch(event.target.value)} />
+            <button type="button" onClick={() => setSelectedBranches(branches.map((item) => item.id))}>Seleccionar todas</button>
+            <button type="button" onClick={() => setSelectedBranches([])}>Limpiar</button>
+          </div>
+          <div className="lr11-branch-options">
+            {shownBranches.map((item) => <label key={item.id}>
+              <input type="checkbox" checked={selectedIds.includes(item.id)}
+                onChange={() => toggleBranch(item.id)} />
+              <span>{item.name}</span>
+            </label>)}
+            {!shownBranches.length && <span className="lr10-series-hint">Sin sucursales coincidentes.</span>}
+          </div>
+        </fieldset>
+        <fieldset className="lr11-mode-picker">
+          <legend>Visualización</legend>
+          <div className="lr11-mode-buttons">
+            <button type="button" aria-pressed={branchMode === "consolidated"}
+              className={branchMode === "consolidated" ? "lr11-mode-active" : ""}
+              onClick={() => setBranchMode("consolidated")}>Consolidado</button>
+            <button type="button" aria-pressed={branchMode === "comparison"}
+              className={branchMode === "comparison" ? "lr11-mode-active" : ""}
+              onClick={() => setBranchMode("comparison")}>Comparativo</button>
+          </div>
+          <p className="lr10-series-hint">{branchMode === "consolidated"
+            ? "Una línea del conjunto; requiere un corte válido por sucursal y día."
+            : "Una línea por sucursal; las fechas sin datos se muestran como huecos."}</p>
+        </fieldset>
       </div>
+      <p className="lr10-series-hint">Este selector afecta solo las gráficas, no los indicadores ni la comparación global de la cabecera.</p>
+      {!selectedIds.length ? (
+        <p className="lr2-empty">Selecciona al menos una sucursal para mostrar las series.</p>
+      ) : (
+        <div className="lr10-series-list">
+          {DAILY_OPTIONS.filter((option) => selectedIndicators.includes(option.key))
+            .map((option) => branchMode === "comparison" ? (
+              <BranchComparisonSeries key={option.key} indicator={option.key}
+                series={series} branches={branches} dates={calendarDates}
+                selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+            ) : (
+              <DailySeries key={option.key} rows={scopedRows} indicator={option.key}
+                calendarDates={calendarDates} dailyData={series[0]?.days}
+                selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+            ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -575,6 +775,7 @@ export default function LaRousseDashboard() {
     [data, setData] = useState(null),
     [globalCutoff, setGlobalCutoff] = useState(null),
     [catalog, setCatalog] = useState([]),
+    [chartRows, setChartRows] = useState([]),
     [error, setError] = useState(""),
     [loading, setLoading] = useState(true),
     [reload, setReload] = useState(0),
@@ -587,6 +788,7 @@ export default function LaRousseDashboard() {
     setLoading(true);
     setError("");
     setData(null);
+    setChartRows([]);
     setGlobalCutoff(null);
     const read = async (scope) => {
       const response = await fetch(
@@ -611,6 +813,7 @@ export default function LaRousseDashboard() {
         if (!controller.signal.aborted) {
           setData(selected);
           setCatalog(selected.branches);
+          setChartRows(branch ? (global?.rows || selected.rows) : selected.rows);
           setGlobalCutoff(commercialCutoffDate(
             (branch ? global?.rows : selected.rows) || [], month,
           ));
@@ -758,7 +961,8 @@ export default function LaRousseDashboard() {
               </div>
             ) : (
               <>
-                <Daily rows={m.commercial} />
+                <Daily key={month + ":" + branch} rows={commercialMetrics(chartRows, []).commercial}
+                  branches={catalog} initialBranch={branch} />
                 <Branches data={data} selected={branch} overall={m} month={month} globalCutoff={globalCutoff} />
                 <History data={data} selected={branch} rows={m.historical} />
               </>
