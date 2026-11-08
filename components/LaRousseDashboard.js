@@ -159,9 +159,7 @@ const DAILY_OPTIONS = [
   { key: "conversion", label: "Conversión", selectedLabel: "Conversión del día" },
   { key: "piecesPerTicket", label: "Piezas por ticket", selectedLabel: "Piezas por ticket del día" },
 ];
-function Daily({ rows }) {
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [indicator, setIndicator] = useState("net");
+function DailySeries({ rows, indicator, selectedDate, setSelectedDate }) {
   const chosen = DAILY_OPTIONS.find((option) => option.key === indicator) || DAILY_OPTIONS[0];
   const observedDates = [...new Set(rows.map((row) => row.date))].sort();
   const dates = [];
@@ -182,7 +180,7 @@ function Daily({ rows }) {
   );
   const chartMax = maxKnown > 0n ? maxKnown : 100n;
   const chartWidth = Math.max(700, daily.length * 42);
-  const chartHeight = 280;
+  const chartHeight = 250;
   const left = 100, right = 24, top = 16, bottom = 39;
   const chartBase = chartHeight - bottom;
   const chartInnerHeight = chartBase - top;
@@ -226,20 +224,8 @@ function Daily({ rows }) {
     : "";
   const tickStep = Math.max(1, Math.ceil(points.length / 11));
   return (
-    <section className="lr2-panel lr6-daily">
-      <div className="lr9-daily-header">
-        <h2>Evolución diaria</h2>
-        <div className="lr9-indicator-picker" role="group" aria-label="Indicador de evolución diaria">
-          {DAILY_OPTIONS.map((option) => (
-            <button key={option.key} type="button"
-              className={indicator === option.key ? "lr9-indicator-active" : ""}
-              aria-pressed={indicator === option.key}
-              onClick={() => setIndicator(option.key)}>
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </div>
+    <div className="lr10-series" aria-label={"Serie diaria de " + chosen.label.toLowerCase()}>
+      <h3 className="lr10-series-title">{chosen.label}</h3>
       {!daily.length ? (
         <p className="lr2-empty">No hay cortes comerciales comparables para mostrar.</p>
       ) : (
@@ -326,6 +312,44 @@ function Daily({ rows }) {
           </details>
         </>
       )}
+    </div>
+  );
+}
+
+function Daily({ rows }) {
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedIndicators, setSelectedIndicators] = useState(["net"]);
+  const toggleIndicator = (key) => setSelectedIndicators((current) => {
+    if (current.includes(key)) {
+      return current.length > 1 ? current.filter((value) => value !== key) : current;
+    }
+    return [...current, key];
+  });
+  return (
+    <section className="lr2-panel lr6-daily">
+      <div className="lr9-daily-header">
+        <div>
+          <h2>Evolución diaria</h2>
+          <p className="lr10-series-hint">Selecciona una o varias métricas; cada gráfica conserva su propia escala.</p>
+        </div>
+        <div className="lr9-indicator-picker" role="group" aria-label="Indicadores de evolución diaria (selección múltiple)">
+          {DAILY_OPTIONS.map((option) => (
+            <button key={option.key} type="button"
+              className={selectedIndicators.includes(option.key) ? "lr9-indicator-active" : ""}
+              aria-pressed={selectedIndicators.includes(option.key)}
+              onClick={() => toggleIndicator(option.key)}>
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="lr10-series-list">
+        {DAILY_OPTIONS.filter((option) => selectedIndicators.includes(option.key))
+          .map((option) => (
+            <DailySeries key={option.key} rows={rows} indicator={option.key}
+              selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+          ))}
+      </div>
     </section>
   );
 }
