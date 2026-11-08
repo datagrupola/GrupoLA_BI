@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { money, summarize } from "../lib/larousse.mjs";
+import { reviewCutCounts } from "../lib/larousse-review.mjs";
 import {
   commercialMetrics,
   commercialCutoffDate,
@@ -42,19 +43,22 @@ function GoalProgress({ metrics }) {
   const label = percent(metrics.fullNet, metrics.target);
   return (
     <article className="lr4-goal" aria-label="Avance contra meta">
-      <div className="lr4-goal-head"><span>Avance contra meta</span><strong>{label}</strong></div>
-      <div className={"lr4-track" + (width === null ? " lr4-track-empty" : "")}
-        role={width === null ? undefined : "progressbar"}
-        aria-label="Cumplimiento de la meta"
-        aria-valuemin={width === null ? undefined : 0}
-        aria-valuemax={width === null ? undefined : 100}
-        aria-valuenow={width === null ? undefined : width}
-        aria-valuetext={label}>
-        {width !== null && <span style={{ width: width + "%" }} />}
+      <span className="lr2-metric-label">Avance contra meta</span>
+      <strong className="lr8-goal-value">{label}</strong>
+      <div className="lr8-goal-details">
+        <div className={"lr4-track" + (width === null ? " lr4-track-empty" : "")}
+          role={width === null ? undefined : "progressbar"}
+          aria-label="Cumplimiento de la meta"
+          aria-valuemin={width === null ? undefined : 0}
+          aria-valuemax={width === null ? undefined : 100}
+          aria-valuenow={width === null ? undefined : width}
+          aria-valuetext={label}>
+          {width !== null && <span style={{ width: width + "%" }} />}
+        </div>
+        <small>{metrics.remaining === null ? "Sin datos suficientes para calcular el avance" :
+          metrics.remaining === 0n ? "Meta alcanzada" :
+          <>Faltan <strong>{money(metrics.remaining)}</strong></>}</small>
       </div>
-      <small>{metrics.remaining === null ? "Sin datos suficientes para calcular el avance" :
-        metrics.remaining === 0n ? "Meta alcanzada" :
-        <>Faltan <strong>{money(metrics.remaining)}</strong></>}</small>
     </article>
   );
 }
@@ -66,28 +70,73 @@ function Forecast({ forecast }) {
     <article className="lr7-forecast">
       <span className="lr2-metric-label">Proyección de cierre</span>
       <strong className="lr7-forecast-value">{money(forecast.projectedNet)}</strong>
-      <div className="lr7-forecast-details">
-        <div><span>Ritmo observado</span><b>{money(forecast.observedDaily)} / día reportado</b></div>
-        <div><span>Corte global</span><b>{date(forecast.globalDate)}</b></div>
+      <div className="lr8-forecast-support">
+        <div className="lr7-forecast-details">
+          <div><span>Ritmo observado</span><b>{money(forecast.observedDaily)} / día reportado</b></div>
+          <div><span>Corte global</span><b>{date(forecast.globalDate)}</b></div>
+        </div>
+        {forecast.projectedNet !== null && forecast.expectedPairs !== null &&
+          forecast.countedPairs < forecast.expectedPairs && (
+            <small className="lr7-forecast-warning">
+              Cobertura de fechas parcial: {forecast.countedPairs}/{forecast.expectedPairs} sucursal-días registrados.
+            </small>
+          )}
+        {forecast.scopedDate !== null && forecast.globalDate !== null &&
+          forecast.scopedDate < forecast.globalDate && (
+            <small className="lr7-forecast-warning">
+              Último corte de la selección: {date(forecast.scopedDate)}.
+            </small>
+          )}
+        {forecast.projectedNet === null && (
+          <small className="lr7-forecast-warning">
+            Sin proyección comparable o sin fecha global verificada.
+          </small>
+        )}
       </div>
-      {forecast.projectedNet !== null && forecast.expectedPairs !== null &&
-        forecast.countedPairs < forecast.expectedPairs && (
-          <small className="lr7-forecast-warning">
-            Cobertura de fechas parcial: {forecast.countedPairs}/{forecast.expectedPairs} sucursal-días registrados.
-          </small>
-        )}
-      {forecast.scopedDate !== null && forecast.globalDate !== null &&
-        forecast.scopedDate < forecast.globalDate && (
-          <small className="lr7-forecast-warning">
-            Último corte de la selección: {date(forecast.scopedDate)}.
-          </small>
-        )}
-      {forecast.projectedNet === null && (
-        <small className="lr7-forecast-warning">
-          Sin proyección comparable o sin fecha global verificada.
-        </small>
-      )}
     </article>
+  );
+}
+function CutReview({ rows, confirmed }) {
+  const review = reviewCutCounts(rows);
+  return (
+    <aside className="lr8-review" aria-label="Revisión de cortes por Finance">
+      <div className="lr8-review-heading">
+        <strong>Revisión de cortes</strong>
+        <span>{review.total} cortes OPS comerciales</span>
+      </div>
+      <div className="lr8-review-chart">
+        {review.total > 0 ? (
+          <div className="lr8-review-track"
+            role="img"
+            aria-label={`${review.approved} aprobados (${review.approvedPercent.toFixed(1)} %); ${review.awaiting} pendientes de aprobación (${review.awaitingPercent.toFixed(1)} %), incluidos ${review.correction} en corrección`}>
+            {review.approved > 0 && (
+              <span className="lr8-review-approved"
+                style={{ width: review.approvedPercent + "%" }}>
+                {review.approvedPercent >= 17 && <b>{review.approvedPercent.toFixed(1)}%</b>}
+              </span>
+            )}
+            {review.awaiting > 0 && (
+              <span className="lr8-review-pending"
+                style={{ width: review.awaitingPercent + "%" }}>
+                {review.awaitingPercent >= 17 && <b>{review.awaitingPercent.toFixed(1)}%</b>}
+              </span>
+            )}
+          </div>
+        ) : (
+          <div className="lr8-review-empty">Sin cortes OPS comerciales para revisar</div>
+        )}
+      </div>
+      <div className="lr8-review-legend">
+        <span><i className="lr8-review-dot approved" aria-hidden="true" />Aprobados <strong>{number(review.approved)}</strong></span>
+        <span><i className="lr8-review-dot pending" aria-hidden="true" />Pendientes <strong>{number(review.awaiting)}</strong></span>
+        {review.correction > 0 && <small>Incluye {review.correction} en corrección</small>}
+      </div>
+      <p className="lr8-review-foot">
+        Venta aprobada: <strong>{money(confirmed.net)}</strong>
+        <span aria-hidden="true"> · </span>
+        {confirmed.known}/{confirmed.count} cortes aprobados con importe
+      </p>
+    </aside>
   );
 }
 function Daily({ rows }) {
@@ -420,7 +469,7 @@ export default function LaRousseDashboard() {
     m = commercialMetrics(rows, data?.targets || []),
     forecast = commercialProjection(rows, data?.targets || [], month, globalCutoff);
   return (
-    <div className="lr2 lr3 lr4 lr7">
+    <div className="lr2 lr3 lr4 lr7 lr8">
       <style>{styles}</style>
       <header className="lr2-header">
         <div>
@@ -500,26 +549,7 @@ export default function LaRousseDashboard() {
                 <History data={data} selected={branch} rows={m.historical} />
               </>
             )}
-            <aside
-              className="lr2-audit"
-              aria-label="Auditoría de cortes por Finance"
-            >
-              <span className="lr2-audit-heading">
-                Revisión de cortes
-              </span>
-              <span>
-                Venta aprobada: {money(m.confirmed.net)} ·{" "}
-                {m.confirmed.known}/{m.confirmed.count} cortes aprobados con
-                importe
-              </span>
-              <span>
-                {rows.filter((r) => r.state === "PENDING_REVIEW").length}{" "}
-                pendientes · {rows.filter((r) => r.state === "APPROVED").length}{" "}
-                aprobados ·{" "}
-                {rows.filter((r) => r.state === "CORRECTION_REQUESTED").length}{" "}
-                en corrección
-              </span>
-            </aside>
+            <CutReview rows={m.commercial} confirmed={m.confirmed} />
           </>
         )
       )}
