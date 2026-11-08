@@ -58,7 +58,7 @@ test("single horizontal stacked bar is linked to the audited commercial populati
   assert.match(src, /role="img"/);
   assert.match(src, /lr8-review-track/);
   assert.match(src, /Incluye \{review\.correction\} en corrección/);
-  assert.match(src, /grid-template-rows:24px 68px minmax\(64px,1fr\)/);
+  assert.match(css, /grid-template-rows:24px 68px minmax\(64px,1fr\)/);
   assert.match(css, /\.lr8 \.lr4-lead > article/);
   assert.match(css, /\.lr8-review-approved/);
   assert.match(css, /\.lr8-review-pending/);
