@@ -76,10 +76,13 @@ function Daily({ rows }) {
       <div className="lr2-chart-scroll">
         <div
           className="lr3-chart"
-          style={{ minWidth: Math.max(320, dates.length * 42) }}
+          style={{ minWidth: Math.max(320, dates.length * 124) }}
         >
           {daily.map((d) => (
             <div key={d.date} className="lr3-day">
+              <strong className="lr5-day-amount" title={d.date + " · " + money(d.net)}>
+                {d.net === null ? "N/D" : money(d.net)}
+              </strong>
               <div
                 className="lr3-bar-slot"
                 title={d.date + " · " + money(d.net)}
@@ -403,4 +406,4 @@ export default function LaRousseDashboard() {
     </div>
   );
 }
-const styles = `.lr3-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0 24px}.lr3-kpis .lr2-hero{grid-column:auto;min-height:170px}.lr3-kpis .lr2-metric-value{font-size:clamp(22px,2.4vw,36px);overflow-wrap:anywhere}.lr3-kpis .lr2-metric{min-height:140px}.lr3 .lr2-panel{margin-bottom:20px}.lr3-note{font-size:12px;color:#64748b;margin:8px 0 18px}.lr3-activity{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:20px 0}.lr3-history{background:#fffaf0;border-color:#e8d7af}.lr3-history p{font-size:13px;line-height:1.8;margin:12px 0}.lr3-chart{display:flex;gap:8px;height:210px;align-items:end;margin:14px 0}.lr3-day{flex:1;min-width:26px;font-size:10px;text-align:center;color:#64748b}.lr3-bar-slot{height:170px;display:flex;align-items:end;justify-content:center}.lr3-bar-slot>span{display:block;background:#2155a0;max-width:28px;width:80%;border-radius:5px 5px 0 0}.lr3-footer{padding:16px 0;font-size:12px}.lr3-footer a{color:#345b96}@media(max-width:1000px){.lr3-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.lr3-activity{grid-template-columns:1fr 1fr}}@media(max-width:600px){.lr3-kpis,.lr3-activity{grid-template-columns:1fr}.lr3-kpis .lr2-hero{grid-column:auto}.lr3 .lr2-metric-value{font-size:26px;overflow-wrap:anywhere}}`;
+const styles = `.lr3-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0 24px}.lr3-kpis .lr2-hero{grid-column:auto;min-height:170px}.lr3-kpis .lr2-metric-value{font-size:clamp(22px,2.4vw,36px);overflow-wrap:anywhere}.lr3-kpis .lr2-metric{min-height:140px}.lr3 .lr2-panel{margin-bottom:20px}.lr3-note{font-size:12px;color:#64748b;margin:8px 0 18px}.lr3-activity{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:20px 0}.lr3-history{background:#fffaf0;border-color:#e8d7af}.lr3-history p{font-size:13px;line-height:1.8;margin:12px 0}.lr3-chart{display:flex;gap:8px;height:244px;align-items:end;margin:14px 0}.lr3-day{flex:1;min-width:116px;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:11px;text-align:center;color:#64748b}.lr5-day-amount{min-height:18px;font-size:11px;font-weight:800;line-height:18px;white-space:nowrap;color:#26425f;font-variant-numeric:tabular-nums}.lr3-bar-slot{height:179px;width:100%;display:flex;align-items:end;justify-content:center}.lr3-bar-slot>span{display:block;background:#2155a0;max-width:28px;width:80%;border-radius:5px 5px 0 0}.lr3-footer{padding:16px 0;font-size:12px}.lr3-footer a{color:#345b96}@media(max-width:1000px){.lr3-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.lr3-activity{grid-template-columns:1fr 1fr}}@media(max-width:600px){.lr3-kpis,.lr3-activity{grid-template-columns:1fr}.lr3-kpis .lr2-hero{grid-column:auto}.lr3 .lr2-metric-value{font-size:26px;overflow-wrap:anywhere}}`;
