@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { money, summarize } from "../lib/larousse.mjs";
 import { reviewCutCounts } from "../lib/larousse-review.mjs";
+import { dailyCommercialMetrics } from "../lib/larousse-daily.mjs";
 import {
   commercialMetrics,
   commercialCutoffDate,
@@ -72,7 +73,7 @@ function Forecast({ forecast }) {
       <strong className="lr7-forecast-value">{money(forecast.projectedNet)}</strong>
       <div className="lr8-forecast-support">
         <div className="lr7-forecast-details">
-          <div><span>Ritmo observado</span><b>{money(forecast.observedDaily)} / día reportado</b></div>
+          <div><span>Ritmo diario de venta</span><b>{money(forecast.observedDaily)} / día reportado</b></div>
           <div><span>Corte global</span><b>{date(forecast.globalDate)}</b></div>
         </div>
         {forecast.projectedNet !== null && forecast.expectedPairs !== null &&
@@ -152,8 +153,16 @@ function CutReview({ rows, confirmed }) {
     </aside>
   );
 }
+const DAILY_OPTIONS = [
+  { key: "net", label: "Ventas", selectedLabel: "Venta neta del día" },
+  { key: "footfall", label: "Afluencia", selectedLabel: "Afluencia del día" },
+  { key: "conversion", label: "Conversión", selectedLabel: "Conversión del día" },
+  { key: "piecesPerTicket", label: "Piezas por ticket", selectedLabel: "Piezas por ticket del día" },
+];
 function Daily({ rows }) {
   const [selectedDate, setSelectedDate] = useState(null);
+  const [indicator, setIndicator] = useState("net");
+  const chosen = DAILY_OPTIONS.find((option) => option.key === indicator) || DAILY_OPTIONS[0];
   const observedDates = [...new Set(rows.map((row) => row.date))].sort();
   const dates = [];
   if (observedDates.length) {
@@ -164,18 +173,13 @@ function Daily({ rows }) {
       cursor.setUTCDate(cursor.getUTCDate() + 1);
     }
   }
-  // Missing dates and incomplete reports are gaps, never zero-valued sales.
-  const daily = dates.map((date) => {
-    const dayRows = rows.filter((row) => row.date === date);
-    return {
-      date,
-      ...(dayRows.length ? summarize(dayRows) : { count: 0, known: 0, net: null }),
-    };
-  });
-  const known = daily.filter((day) => day.net !== null);
-  const selected = daily.find((day) => day.date === selectedDate)
+  const daily = dailyCommercialMetrics(rows, dates);
+  const known = daily.filter((day) => day[indicator] !== null);
+  const selected = daily.find((day) => day.date === selectedDate && day[indicator] !== null)
     || known[known.length - 1] || daily[daily.length - 1];
-  const maxKnown = known.reduce((high, day) => day.net > high ? day.net : high, 0n);
+  const maxKnown = known.reduce(
+    (high, day) => day[indicator] > high ? day[indicator] : high, 0n
+  );
   const chartMax = maxKnown > 0n ? maxKnown : 100n;
   const chartWidth = Math.max(700, daily.length * 42);
   const chartHeight = 280;
@@ -187,7 +191,8 @@ function Daily({ rows }) {
   const pointY = (amount) => chartBase -
     Number(amount * BigInt(chartInnerHeight) / chartMax);
   const points = daily.map((day, index) => ({
-    ...day, x: pointX(index), y: day.net === null ? null : pointY(day.net),
+    ...day, x: pointX(index),
+    y: day[indicator] === null ? null : pointY(day[indicator]),
   }));
   const segments = [];
   let current = [];
@@ -200,9 +205,20 @@ function Daily({ rows }) {
     }
   }
   if (current.length) segments.push(current);
-  const axisMoney = (amount) => new Intl.NumberFormat("es-MX", {
-    style: "currency", currency: "MXN", notation: "compact", maximumFractionDigits: 1,
-  }).format(Number(amount) / 100);
+  const formatValue = (value) => {
+    if (indicator === "net") return money(value);
+    if (indicator === "footfall") return number(value);
+    return formatHundredths(value, indicator === "conversion" ? "%" : "");
+  };
+  const formatAxis = (value) => {
+    if (indicator === "net") return new Intl.NumberFormat("es-MX", {
+      style: "currency", currency: "MXN", notation: "compact", maximumFractionDigits: 1,
+    }).format(Number(value) / 100);
+    if (indicator === "footfall") return new Intl.NumberFormat("es-MX", {
+      notation: "compact", maximumFractionDigits: 1,
+    }).format(Number(value));
+    return formatHundredths(value, indicator === "conversion" ? "%" : "");
+  };
   const dayLabel = (date) => date
     ? new Intl.DateTimeFormat("es-MX", {
         day: "numeric", month: "short", year: "numeric", timeZone: "UTC",
@@ -211,22 +227,35 @@ function Daily({ rows }) {
   const tickStep = Math.max(1, Math.ceil(points.length / 11));
   return (
     <section className="lr2-panel lr6-daily">
-      <h2>Evolución diaria de ventas</h2>
+      <div className="lr9-daily-header">
+        <h2>Evolución diaria</h2>
+        <div className="lr9-indicator-picker" role="group" aria-label="Indicador de evolución diaria">
+          {DAILY_OPTIONS.map((option) => (
+            <button key={option.key} type="button"
+              className={indicator === option.key ? "lr9-indicator-active" : ""}
+              aria-pressed={indicator === option.key}
+              onClick={() => setIndicator(option.key)}>
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
       {!daily.length ? (
         <p className="lr2-empty">No hay cortes comerciales comparables para mostrar.</p>
       ) : (
         <>
           <div className="lr6-selected">
             <div>
-              <span>Venta neta del día</span>
-              <strong>{money(selected.net)}</strong>
+              <span>{chosen.selectedLabel}</span>
+              <strong>{formatValue(selected[indicator])}</strong>
             </div>
             <time dateTime={selected.date}>{dayLabel(selected.date)}</time>
           </div>
-          <div className="lr6-scroll" role="region" aria-label="Gráfica de ventas diarias" tabIndex={0}>
+          <div className="lr6-scroll" role="region"
+            aria-label={"Gráfica diaria de " + chosen.label.toLowerCase()} tabIndex={0}>
             <svg className="lr6-chart" width={chartWidth} height={chartHeight}
               viewBox={"0 0 " + chartWidth + " " + chartHeight}
-              role="group" aria-label="Serie temporal de ventas netas diarias">
+              role="group" aria-label={"Serie temporal de " + chosen.label.toLowerCase()}>
               {Array.from({ length: 5 }, (_, i) => {
                 const amount = chartMax * BigInt(4 - i) / 4n;
                 const y = top + (chartInnerHeight * i) / 4;
@@ -235,7 +264,7 @@ function Daily({ rows }) {
                     <line className="lr6-grid" x1={left} y1={y}
                       x2={chartWidth - right} y2={y} />
                     <text className="lr6-axis" textAnchor="end" x={left - 12} y={y + 4}>
-                      {axisMoney(amount)}
+                      {formatAxis(amount)}
                     </text>
                   </g>
                 );
@@ -257,7 +286,7 @@ function Daily({ rows }) {
               )}
               {points.filter((point) => point.y !== null).map((point) => (
                 <g key={point.date} role="button" tabIndex={0}
-                  aria-label={dayLabel(point.date) + ": " + money(point.net)}
+                  aria-label={dayLabel(point.date) + ": " + formatValue(point[indicator])}
                   aria-pressed={selected.date === point.date}
                   onMouseEnter={() => setSelectedDate(point.date)}
                   onFocus={() => setSelectedDate(point.date)}
@@ -271,23 +300,23 @@ function Daily({ rows }) {
                   <circle cx={point.x} cy={point.y} r={16} fill="transparent" />
                   <circle className={selected.date === point.date ? "lr6-dot lr6-dot-active" : "lr6-dot"}
                     cx={point.x} cy={point.y} r={selected.date === point.date ? 6 : 4.5} />
-                  <title>{dayLabel(point.date) + " · " + money(point.net)}</title>
+                  <title>{dayLabel(point.date) + " · " + formatValue(point[indicator])}</title>
                 </g>
               ))}
             </svg>
           </div>
-          {daily.some((day) => day.net === null) &&
-            <p className="lr6-gap-note">Los días sin venta neta comparable se muestran como interrupciones de la línea.</p>}
+          {daily.some((day) => day[indicator] === null) &&
+            <p className="lr6-gap-note">Las fechas sin datos comparables para {chosen.label.toLowerCase()} se muestran como interrupciones de la línea.</p>}
           <details className="lr4-daily-detail">
             <summary>Ver detalle diario</summary>
             <div className="lr2-table-scroll">
               <table>
-                <thead><tr><th>Fecha</th><th>Venta neta</th><th>Cobertura</th></tr></thead>
+                <thead><tr><th>Fecha</th><th>{chosen.label}</th><th>Cobertura de venta</th></tr></thead>
                 <tbody>
                   {daily.map((day) => (
                     <tr key={day.date}>
                       <td>{day.date}</td>
-                      <td>{money(day.net)}</td>
+                      <td>{formatValue(day[indicator])}</td>
                       <td>{day.known}/{day.count}</td>
                     </tr>
                   ))}
@@ -300,17 +329,20 @@ function Daily({ rows }) {
     </section>
   );
 }
-function Branches({ data, selected, overall }) {
+
+function Branches({ data, selected, overall, month, globalCutoff }) {
   const groups = data.branches
     .filter((b) => !selected || b.id === selected)
-    .map((b) => ({
-      ...b,
-      m: commercialMetrics(
-        data.rows.filter((r) => r.branch_id === b.id),
-        data.targets.filter((t) => t.branch_id === b.id),
-      ),
-      count: data.rows.filter((r) => r.branch_id === b.id).length,
-    }))
+    .map((b) => {
+      const scopedRows = data.rows.filter((r) => r.branch_id === b.id);
+      const scopedTargets = data.targets.filter((t) => t.branch_id === b.id);
+      return {
+        ...b,
+        m: commercialMetrics(scopedRows, scopedTargets),
+        projection: commercialProjection(scopedRows, scopedTargets, month, globalCutoff),
+        count: scopedRows.length,
+      };
+    })
     .sort((a, b) =>
       a.m.sales.knownNet === b.m.sales.knownNet
         ? a.name.localeCompare(b.name)
@@ -328,6 +360,8 @@ function Branches({ data, selected, overall }) {
             <tr>
               <th>Sucursal</th>
               <th>Venta neta</th>
+              <th>Proyección de cierre</th>
+              <th>Cierre vs. meta</th>
               <th>Meta</th>
               <th>Avance</th>
               <th>Faltante</th>
@@ -346,6 +380,8 @@ function Branches({ data, selected, overall }) {
                     : "No disponible"}
                   {!b.m.complete && <small> Parcial</small>}
                 </td>
+                <td>{money(b.projection.projectedNet)}</td>
+                <td>{percent(b.projection.projectedNet, b.m.target)}</td>
                 <td>{money(b.m.target)}</td>
                 <td><div className="lr4-mini-progress">
                   <div className={"lr4-track" + (visualProgress(b.m.fullNet, b.m.target) === null ? " lr4-track-empty" : "")}>
@@ -558,7 +594,7 @@ export default function LaRousseDashboard() {
             ) : (
               <>
                 <Daily rows={m.commercial} />
-                <Branches data={data} selected={branch} overall={m} />
+                <Branches data={data} selected={branch} overall={m} month={month} globalCutoff={globalCutoff} />
                 <History data={data} selected={branch} rows={m.historical} />
               </>
             )}
