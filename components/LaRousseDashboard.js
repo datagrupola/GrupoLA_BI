@@ -955,14 +955,17 @@ export default function LaRousseDashboard() {
                 loading={comparisonLoading || !currentComparison && !comparisonError && !!windows}
                 error={comparisonError} />
             )}
-            {!rows.length ? (
+            {!rows.length && (
               <div role="status" className="lr2-empty">
                 Sin cortes para el período y sucursal seleccionados.
               </div>
-            ) : (
+            )}
+            {commercialMetrics(chartRows, []).commercial.length > 0 && (
+              <Daily key={month + ":" + branch} rows={commercialMetrics(chartRows, []).commercial}
+                branches={catalog} initialBranch={branch} />
+            )}
+            {!!rows.length && (
               <>
-                <Daily key={month + ":" + branch} rows={commercialMetrics(chartRows, []).commercial}
-                  branches={catalog} initialBranch={branch} />
                 <Branches data={data} selected={branch} overall={m} month={month} globalCutoff={globalCutoff} />
                 <History data={data} selected={branch} rows={m.historical} />
               </>
