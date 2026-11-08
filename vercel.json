@@ -1,6 +1,7 @@
 {
   "git": {
     "deploymentEnabled": {
+      "ui/bi-net-sales-fit-20261108": false,
       "feat/bi-commercial-kpis-forecast-20261108": false,
       "feat/la-rousse-financial-dashboard-v1-20261107": false,
       "fix/la-rousse-bi-mobile-20261107": false,
