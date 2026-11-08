@@ -104,5 +104,5 @@ test("BI-04: UI supports multiple separate synced series and one global comparis
   assert.match(src, /selectedDate={selectedDate} setSelectedDate={setSelectedDate}/);
   assert.match(css, /\.lr10-series-list/);
   assert.match(src, /Comparación temporal global/);
-  assert.match(src, /month: item, version: "2", \Q...\E/);
+  assert.match(src, /month: item, version: "2"/);
 });
