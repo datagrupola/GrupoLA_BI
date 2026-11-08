@@ -217,6 +217,36 @@ test("BI-02 forecast uses GLOBAL last date even with a selected branch behind", 
   ], "2026-11"), "2026-11-07");
 });
 
+test("BI-11-01 suppresses projection when a selected branch has no commercial cuts", () => {
+  const rows = [row({ date: "2026-11-04", net_sales: "53812.00" })];
+  const selectedTargets = [...target, { branch_id: "b", amount: null }];
+  const p = commercialProjection(rows, selectedTargets, "2026-11", "2026-11-07");
+  assert.equal(commercialMetrics(rows, selectedTargets).complete, false);
+  assert.equal(p.projectedNet, null);
+  assert.equal(p.globalDate, "2026-11-07");
+  assert.equal(p.observedDaily, 5381200n);
+  // The missing branch is not part of an explicitly A-only selection.
+  assert.equal(commercialProjection(rows, target, "2026-11", "2026-11-07").projectedNet, 23062286n);
+});
+
+test("BI-11-01 retains projection for covered branches with intermediate calendar gaps", () => {
+  const rows = [
+    row({ date: "2026-11-01", net_sales: "100.00" }),
+    row({ cut_id: "a-4", revision_id: "r-a-4", date: "2026-11-04", net_sales: "200.00" }),
+    row({ cut_id: "b-7", revision_id: "r-b-7", branch_id: "b", date: "2026-11-07", net_sales: "400.00" }),
+  ];
+  const selectedTargets = [{ branch_id: "a", amount: null }, { branch_id: "b", amount: null }];
+  const globalDate = commercialCutoffDate(rows, "2026-11");
+  const p = commercialProjection(rows, selectedTargets, "2026-11", globalDate);
+  assert.equal(commercialMetrics(rows, selectedTargets).complete, true);
+  assert.equal(p.projectedNet, 300000n); // $700 × 30 / global day 7
+  assert.equal(p.observedDaily, 23333n); // $700 / 3 distinct reported dates
+  assert.equal(p.cutoffDay, 7);
+  assert.equal(p.countedPairs, 3);
+  assert.equal(p.expectedPairs, 14);
+  assert.ok(p.countedPairs < p.expectedPairs);
+});
+
 test("BI-02 current commercial sample reproduces audited net, projection and rhythm exactly", () => {
   const sales = [391950, 330283, 174337, 205962, 179572, 192028, 369022];
   const rows = sales.map((value, index) => row({
