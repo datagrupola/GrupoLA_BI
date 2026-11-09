@@ -206,7 +206,7 @@ button,input,select { font:inherit; }
 
 
 /* La Rousse V2.1 — presentation only; metrics remain defined in Finance/BI V2 */
-.lr4 .lr2-header{margin-bottom:22px;align-items:center}
+.lr4 .lr2-header{margin-bottom:16px;align-items:center}
 .lr4 .lr2-eyebrow{font-size:10px;letter-spacing:.13em;margin-bottom:7px}
 .lr4 .lr2-header h1{font-size:clamp(26px,2.6vw,34px)}
 .lr4-lead{display:grid;grid-template-columns:minmax(0,1.23fr) minmax(0,.95fr) minmax(0,1.25fr);gap:14px;margin:0 0 14px}
@@ -602,17 +602,21 @@ button,input,select { font:inherit; }
 
 
 /* Executive layout: performance first, trends second, comparison and QA last. */
-.lr16-performance-group{margin:0 0 20px}
-.lr16-performance-group>.lr2-panel{margin-bottom:12px}
-.lr16-ranking-pie{width:min(100%,700px);margin:0 0 8px}
-.lr16-ranking-pie .lr14-card{height:auto;min-height:275px}
-.lr16-ranking-pie .lr14-pie-layout{grid-template-columns:minmax(160px,1fr) minmax(180px,1fr)}
-.lr16-conversion-traffic{margin-top:17px;padding-top:17px;border-top:1px solid #e3eaf2}
+.lr16-performance-group{margin:0 0 14px}
+.lr16-performance-group>.lr2-panel{margin-bottom:10px}
+.lr16-ranking-pie{width:100%;max-width:none;margin:0}
+.lr16-ranking-pie .lr14-card{height:auto;min-height:275px;padding:17px 22px}
+.lr16-ranking-pie .lr14-pie-layout{grid-template-columns:minmax(220px,280px) minmax(0,1fr);gap:clamp(20px,3vw,44px)}
+.lr16-ranking-pie .lr14-pie-legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 12px;align-content:center}
+.lr16-ranking-pie .lr14-pie-legend-item{min-width:0;padding:10px 12px;border:1px solid #e6edf6;border-radius:10px;background:#f7f9fc}
+.lr16-ranking-pie .lr14-pie-legend-item strong{font-size:12px}
+.lr16-ranking-pie .lr14-pie-legend-item small{font-size:11px}
+.lr16-conversion-traffic{margin-top:14px;padding-top:14px;border-top:1px solid #e3eaf2}
 .lr16-conversion-traffic>.lr14-card{height:auto}
 .lr16-comparison-selector{display:flex;flex-direction:column;gap:6px;min-width:208px;max-width:100%;font-size:11px;font-weight:750;color:#6f8095}
 .lr16-comparison-selector select{min-height:40px;padding:8px 11px;border:1px solid #d6e1ef;background:#fff;border-radius:9px;color:#284967;font-size:12px;font-weight:700;cursor:pointer}
 .lr16-comparison-selector select:focus-visible{outline:2px solid #197ab9;outline-offset:2px}
-.lr16-data-controls{margin:24px 0 18px}
+.lr16-data-controls{margin:18px 0 14px}
 .lr16-data-controls>h2{font-size:17px;font-weight:800;color:#244563;margin:0 0 12px}
 .lr16-review-details{border:1px solid #e2e9f3;border-radius:13px;background:#fff;margin-bottom:12px}
 .lr16-review-details>summary{list-style-position:inside;cursor:pointer;padding:15px 18px;font-size:13px;font-weight:750;color:#335a82}
@@ -648,7 +652,25 @@ button,input,select { font:inherit; }
  .lr16-ranking-mobile-extra dt{font-size:10px;color:#62768c;margin:0 0 4px}
  .lr16-ranking-mobile-extra dd{font-size:12px;font-weight:750;color:#213e5f;overflow-wrap:anywhere;font-variant-numeric:tabular-nums;margin:0}
  .lr16-ranking-pie{width:100%}
- .lr16-ranking-pie .lr14-pie-layout{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr)}
+ .lr16-ranking-pie .lr14-card{padding:14px 12px}
+ .lr16-ranking-pie .lr14-pie-layout{grid-template-columns:1fr;gap:12px}
+ .lr16-ranking-pie .lr14-pie{max-width:190px}
+ .lr16-ranking-pie .lr14-pie-legend{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ .lr16-ranking-pie .lr14-pie-legend-item{padding:8px 9px}
+ .lr16-ranking-pie .lr14-pie-legend-item small{font-size:10px}
  .lr16-comparison-selector{width:100%}
  .lr16-data-controls{margin-top:19px}
+}
+
+
+/* Readable density: use the viewport width without changing the dashboard max-width. */
+.lr2.lr3 .lr4-lead{gap:11px;margin-bottom:12px}
+.lr2.lr3 .lr4-activity{gap:11px;margin-bottom:15px}
+.lr2.lr3 > .lr2-panel{margin-bottom:15px}
+.lr2.lr3 .lr16-performance-group > .lr2-panel{margin-bottom:10px}
+@media(min-width:741px) and (max-width:1250px){
+ .lr16-ranking-pie .lr14-pie-legend{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:430px){
+ .lr16-ranking-pie .lr14-pie-legend{grid-template-columns:1fr}
 }
