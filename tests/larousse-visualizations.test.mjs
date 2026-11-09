@@ -98,6 +98,6 @@ test("UI renders native pie and dual-axis charts under existing branch selection
     'branchDailyMetrics(rows, dates, selectedIds, "consolidated")',
     "setSelectedDate(day.date)", "No disponible",
   ])assert.ok(src.includes(snippet),snippet);
-  assert.match(src, /<CommercialVisualizations rows=\\{rows\\} dates=\\{calendarDates\\}/);
-  assert.match(css, /\\.lr14-insights-grid/);
+  assert.match(src, /<CommercialVisualizations rows=\{rows\} dates=\{calendarDates\}/);
+  assert.match(css, /\.lr14-insights-grid/);
 });
