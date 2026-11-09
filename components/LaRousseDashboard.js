@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { money, summarize } from "../lib/larousse.mjs";
 import { reviewCutCounts } from "../lib/larousse-review.mjs";
 import { dailyCommercialMetrics } from "../lib/larousse-daily.mjs";
@@ -468,6 +468,27 @@ function Daily({ rows, branches, initialBranch }) {
   );
   const [branchMode, setBranchMode] = useState("consolidated");
   const [branchSearch, setBranchSearch] = useState("");
+  const [branchPickerOpen, setBranchPickerOpen] = useState(false);
+  const branchPickerRef = useRef(null);
+  useEffect(() => {
+    if (!branchPickerOpen) return;
+    const closeOutside = (event) => {
+      if (branchPickerRef.current && !branchPickerRef.current.contains(event.target))
+        setBranchPickerOpen(false);
+    };
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") {
+        setBranchPickerOpen(false);
+        branchPickerRef.current?.querySelector(".lr12-branch-trigger")?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [branchPickerOpen]);
   const selectedIds = branches.map((item) => item.id).filter((id) => selectedBranches.includes(id));
   const calendarDates = datesForTimeline(rows);
   const series = branchDailyMetrics(rows, calendarDates, selectedIds, branchMode);
@@ -482,59 +503,75 @@ function Daily({ rows, branches, initialBranch }) {
     current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
   const shownBranches = branches.filter((item) =>
     item.name.toLocaleLowerCase("es-MX").includes(branchSearch.trim().toLocaleLowerCase("es-MX")));
+  const summaryNames = branches.filter((item) => selectedIds.includes(item.id)).map((item) => item.name);
+  const selectedSummary = !selectedIds.length ? "Sin sucursales" :
+    selectedIds.length === branches.length ? "Todas las sucursales" :
+    summaryNames.slice(0, 3).join(" · ") +
+    (summaryNames.length > 3 ? " · +" + (summaryNames.length - 3) : "");
   return (
     <section className="lr2-panel lr6-daily">
-      <div className="lr9-daily-header">
-        <div>
-          <h2>Evolución diaria</h2>
-          <p className="lr10-series-hint">Selecciona una o varias métricas; cada gráfica conserva su propia escala.</p>
+      <div className="lr9-daily-header lr12-daily-header">
+        <h2>Evolución diaria</h2>
+      </div>
+      <div className="lr9-indicator-picker lr12-metric-tabs" role="group"
+        aria-label="Indicadores de evolución diaria (selección múltiple)">
+        {DAILY_OPTIONS.map((option) => (
+          <button key={option.key} type="button"
+            className={selectedIndicators.includes(option.key) ? "lr9-indicator-active" : ""}
+            aria-pressed={selectedIndicators.includes(option.key)}
+            onClick={() => toggleIndicator(option.key)}>
+            {option.label}
+          </button>
+        ))}
+      </div>
+      <div className="lr12-toolbar">
+        <div className="lr11-branch-picker" ref={branchPickerRef}>
+          <button type="button" className="lr12-branch-trigger"
+            aria-expanded={branchPickerOpen} aria-controls="lr12-branch-menu"
+            aria-haspopup="true" onClick={() => setBranchPickerOpen((open) => !open)}>
+            <span aria-hidden="true">▦</span>
+            <span>Sucursales ({selectedIds.length})</span>
+            <span className="lr12-chevron" aria-hidden="true">⌄</span>
+          </button>
+          {branchPickerOpen && (
+            <div id="lr12-branch-menu" className="lr12-branch-popover"
+              role="group" aria-label="Selección de sucursales para evolución diaria">
+              <input type="search" aria-label="Buscar sucursal en series"
+                placeholder="Buscar sucursal…" value={branchSearch}
+                onChange={(event) => setBranchSearch(event.target.value)} />
+              <div className="lr11-branch-actions">
+                <button type="button" aria-label="Seleccionar todas las sucursales"
+                  onClick={() => setSelectedBranches(branches.map((item) => item.id))}>Todas</button>
+                <button type="button" onClick={() => setSelectedBranches([])}>Limpiar</button>
+              </div>
+              <div className="lr11-branch-options">
+                {shownBranches.map((item) => (
+                  <label key={item.id}>
+                    <input type="checkbox" checked={selectedIds.includes(item.id)}
+                      onChange={() => toggleBranch(item.id)} />
+                    <span>{item.name}</span>
+                  </label>
+                ))}
+                {!shownBranches.length && (
+                  <span className="lr10-series-hint">Sin sucursales coincidentes.</span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
-        <div className="lr9-indicator-picker" role="group" aria-label="Indicadores de evolución diaria (selección múltiple)">
-          {DAILY_OPTIONS.map((option) => (
-            <button key={option.key} type="button"
-              className={selectedIndicators.includes(option.key) ? "lr9-indicator-active" : ""}
-              aria-pressed={selectedIndicators.includes(option.key)}
-              onClick={() => toggleIndicator(option.key)}>
-              {option.label}
-            </button>
-          ))}
+        <div className="lr11-mode-buttons lr12-mode-switch" role="group"
+          aria-label="Modo de visualización de series">
+          <button type="button" aria-pressed={branchMode === "consolidated"}
+            className={branchMode === "consolidated" ? "lr11-mode-active" : ""}
+            onClick={() => setBranchMode("consolidated")}>Consolidado</button>
+          <button type="button" aria-pressed={branchMode === "comparison"}
+            className={branchMode === "comparison" ? "lr11-mode-active" : ""}
+            onClick={() => setBranchMode("comparison")}>Comparativo</button>
         </div>
       </div>
-      <div className="lr11-controls">
-        <fieldset className="lr11-branch-picker">
-          <legend>Sucursales para las series</legend>
-          <div className="lr11-branch-actions">
-            <input type="search" aria-label="Buscar sucursal en series"
-              placeholder="Buscar sucursal" value={branchSearch}
-              onChange={(event) => setBranchSearch(event.target.value)} />
-            <button type="button" onClick={() => setSelectedBranches(branches.map((item) => item.id))}>Seleccionar todas</button>
-            <button type="button" onClick={() => setSelectedBranches([])}>Limpiar</button>
-          </div>
-          <div className="lr11-branch-options">
-            {shownBranches.map((item) => <label key={item.id}>
-              <input type="checkbox" checked={selectedIds.includes(item.id)}
-                onChange={() => toggleBranch(item.id)} />
-              <span>{item.name}</span>
-            </label>)}
-            {!shownBranches.length && <span className="lr10-series-hint">Sin sucursales coincidentes.</span>}
-          </div>
-        </fieldset>
-        <fieldset className="lr11-mode-picker">
-          <legend>Visualización</legend>
-          <div className="lr11-mode-buttons">
-            <button type="button" aria-pressed={branchMode === "consolidated"}
-              className={branchMode === "consolidated" ? "lr11-mode-active" : ""}
-              onClick={() => setBranchMode("consolidated")}>Consolidado</button>
-            <button type="button" aria-pressed={branchMode === "comparison"}
-              className={branchMode === "comparison" ? "lr11-mode-active" : ""}
-              onClick={() => setBranchMode("comparison")}>Comparativo</button>
-          </div>
-          <p className="lr10-series-hint">{branchMode === "consolidated"
-            ? "Una línea del conjunto; requiere un corte válido por sucursal y día."
-            : "Una línea por sucursal; las fechas sin datos se muestran como huecos."}</p>
-        </fieldset>
-      </div>
-      <p className="lr10-series-hint">Este selector afecta solo las gráficas, no los indicadores ni la comparación global de la cabecera.</p>
+      <p className="lr12-selection-summary">{selectedSummary} · {branchMode === "comparison" ? "Comparativo" : "Consolidado"}.
+        <span className="lr12-scope-hint"> Solo aplica a estas gráficas.</span>
+      </p>
       {!selectedIds.length ? (
         <p className="lr2-empty">Selecciona al menos una sucursal para mostrar las series.</p>
       ) : (

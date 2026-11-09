@@ -66,5 +66,14 @@ test("UI exposes branch multi-selection plus independent comparison and consolid
     "chartRows", "branchDailyMetrics(rows, calendarDates, selectedIds, branchMode)"])
     assert.ok(src.includes(snippet), snippet);
   assert.match(css, /\.lr11-branch-options/);
+  assert.match(css, /\.lr12-branch-popover/);
+  assert.match(css, /position:absolute/);
+  assert.match(src, /branchPickerOpen &&/);
+  assert.match(src, /aria-expanded=\{branchPickerOpen\}/);
+  assert.match(src, /document\.addEventListener\("pointerdown", closeOutside\)/);
+  assert.match(src, /document\.addEventListener\("keydown", closeOnEscape\)/);
+  assert.match(src, /role="group"\s+aria-label="Modo de visualización de series"/);
+  assert.match(src, /aria-label="Seleccionar todas las sucursales"/);
+  assert.doesNotMatch(src, /<fieldset className="lr11-branch-picker">/);
   assert.match(src, /<Daily key=\{month \+ ":" \+ branch\}/);
 });

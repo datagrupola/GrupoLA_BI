@@ -477,22 +477,46 @@ button,input,select { font:inherit; }
 }
 
 
-/* BI-04 follow-up: per-branch timeline selection, independent of header scope. */
-.lr11-controls{display:grid;grid-template-columns:minmax(0,2fr) minmax(180px,1fr);gap:12px;margin:14px 0 8px}
-.lr11-controls fieldset{min-width:0;margin:0;padding:12px;border:1px solid #dce6f1;border-radius:12px}
-.lr11-controls legend{padding:0 6px;font-size:12px;font-weight:800;color:#2f5277}
-.lr11-branch-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
-.lr11-branch-actions input{flex:1 1 135px;min-width:110px;max-width:250px;padding:8px 10px;border:1px solid #d7e2ee;border-radius:8px}
-.lr11-branch-actions button,.lr11-mode-buttons button{padding:8px 10px;border:1px solid #d7e2ee;border-radius:8px;background:#fff;color:#325675;font-size:12px;font-weight:700;cursor:pointer}
-.lr11-branch-options{display:flex;gap:6px 9px;flex-wrap:wrap;align-items:center}
-.lr11-branch-options label{display:inline-flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid #e1e8f1;border-radius:9px;background:#f8fafc;color:#385570;font-size:12px;cursor:pointer}
+/* BI-04: compact multi-selection for evolution charts. */
+.lr12-daily-header{margin-bottom:12px}
+.lr12-daily-header h2{margin:0}
+.lr12-metric-tabs{display:inline-flex;max-width:100%;margin-bottom:12px}
+.lr12-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.lr11-branch-picker{position:relative;min-width:0;z-index:10}
+.lr12-branch-trigger{display:inline-flex;align-items:center;gap:9px;padding:9px 12px;border:1px solid #d3deeb;border-radius:9px;background:#fff;color:#284a70;font-size:12px;font-weight:750;cursor:pointer}
+.lr12-chevron{margin-left:3px;font-size:17px;line-height:10px;color:#6f8399}
+.lr12-branch-trigger[aria-expanded="true"]{border-color:#4680b5;box-shadow:0 0 0 2px rgba(36,107,173,.08)}
+.lr12-branch-popover{position:absolute;top:calc(100% + 7px);left:0;width:290px;max-width:calc(100vw - 40px);padding:12px;background:#fff;border:1px solid #d9e4ef;border-radius:12px;box-shadow:0 14px 32px rgba(20,47,80,.17);z-index:30}
+.lr12-branch-popover>input{display:block;width:100%;min-width:0;padding:9px 10px;margin-bottom:9px;border:1px solid #d7e2ee;border-radius:8px;background:#fff;color:#294763;font-size:12px}
+.lr11-branch-actions{display:flex;gap:7px;margin-bottom:10px}
+.lr11-branch-actions button{padding:7px 11px;border:1px solid #d7e2ee;border-radius:8px;background:#f7f9fc;color:#325675;font-size:12px;font-weight:700;cursor:pointer}
+.lr11-branch-options{display:grid;gap:1px;max-height:245px;overflow-y:auto;overscroll-behavior:contain}
+.lr11-branch-options label{display:flex;align-items:center;gap:9px;padding:9px 8px;border-radius:7px;color:#385570;font-size:12px;cursor:pointer}
+.lr11-branch-options label:hover{background:#f2f6fb}
 .lr11-branch-options input{accent-color:#246bad}
-.lr11-mode-buttons{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:7px}
-.lr11-mode-buttons button[aria-pressed="true"]{background:#215e96;color:#fff;border-color:#215e96}
-.lr11-controls button:focus-visible,.lr11-controls input:focus-visible{outline:2px solid #197ab9;outline-offset:2px}
+.lr11-mode-buttons{display:inline-flex;gap:0;margin:0;padding:3px;border:1px solid #d7e2ee;border-radius:10px;background:#f3f6fa}
+.lr11-mode-buttons button{padding:8px 12px;border:0;border-radius:7px;background:transparent;color:#5d748b;font-size:12px;font-weight:750;cursor:pointer}
+.lr11-mode-buttons button[aria-pressed="true"]{background:#215e96;color:#fff;box-shadow:0 1px 4px rgba(12,53,88,.13)}
+.lr12-branch-trigger:focus-visible,.lr12-branch-popover button:focus-visible,.lr12-branch-popover input:focus-visible,.lr11-mode-buttons button:focus-visible{outline:2px solid #197ab9;outline-offset:2px}
+.lr12-selection-summary{margin:11px 0 15px;font-size:11px;color:#687f98;line-height:1.5}
 .lr11-series-meta{margin:0 0 12px;color:#70839a;font-size:12px}
 .lr11-series-legend{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
 .lr11-legend-item{display:flex;align-items:center;gap:7px;padding:7px 9px;border:1px solid #e2eaf2;border-radius:9px;background:#f7f9fc;color:#385371}
 .lr11-legend-item strong{color:#173d64;font-variant-numeric:tabular-nums}
 .lr11-color{display:inline-block;flex:none;width:10px;height:10px;border-radius:50%}
-@media(max-width:700px){.lr11-controls{grid-template-columns:1fr}.lr11-branch-actions input{max-width:none}.lr11-legend-item{width:100%;justify-content:flex-start}.lr11-legend-item strong{margin-left:auto}}
+@media(max-width:700px){
+.lr12-metric-tabs{display:flex;width:100%;flex-wrap:wrap}
+.lr12-metric-tabs button{flex:1 1 auto}
+.lr12-toolbar{align-items:stretch;gap:9px}
+.lr11-mode-buttons{margin-left:auto}
+.lr11-legend-item{width:100%;justify-content:flex-start}
+.lr11-legend-item strong{margin-left:auto}
+}
+@media(max-width:400px){
+.lr12-toolbar{flex-direction:column;align-items:stretch}
+.lr11-branch-picker,.lr12-branch-trigger{width:100%}
+.lr12-branch-trigger{justify-content:center}
+.lr12-branch-popover{width:100%}
+.lr11-mode-buttons{width:100%}
+.lr11-mode-buttons button{flex:1}
+}
