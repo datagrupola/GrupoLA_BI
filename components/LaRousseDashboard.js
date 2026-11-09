@@ -4,6 +4,7 @@ import { money, summarize } from "../lib/larousse.mjs";
 import { reviewCutCounts } from "../lib/larousse-review.mjs";
 import { dailyCommercialMetrics } from "../lib/larousse-daily.mjs";
 import { datesForTimeline, branchDailyMetrics } from "../lib/larousse-branch-series.mjs";
+import { salesParticipation } from "../lib/larousse-visualizations.mjs";
 import { comparisonWindows, periodComparison } from "../lib/larousse-comparison.mjs";
 import {
   commercialMetrics,
@@ -460,6 +461,234 @@ function BranchComparisonSeries({ indicator, series, branches, dates, selectedDa
   );
 }
 
+
+function SalesByBranchChart({ rows, branches, selectedIds }) {
+  const result = salesParticipation(rows, branches, selectedIds);
+  const colors = new Map(branches.map((item, index) =>
+    [item.id, BRANCH_COLORS[index % BRANCH_COLORS.length]]));
+  const slices = result.entries.filter((entry) => entry.net !== null && entry.net > 0n);
+  const formatShare = (entry) => entry.tenths === null ? "No disponible"
+    : (Math.floor(entry.tenths / 10) + "." + entry.tenths % 10 + "%");
+  const coordinate = (angle, radius) => ({
+    x: 115 + Math.cos(angle) * radius,
+    y: 115 + Math.sin(angle) * radius,
+  });
+  let cumulative = 0n;
+  const wedges = slices.map((entry) => {
+    const start = -Math.PI / 2 + 2 * Math.PI * Number(cumulative * 1000000n / result.total) / 1000000;
+    cumulative += entry.net;
+    const finish = -Math.PI / 2 + 2 * Math.PI * Number(cumulative * 1000000n / result.total) / 1000000;
+    const p1 = coordinate(start, 103), p2 = coordinate(finish, 103);
+    const middle = coordinate((start + finish) / 2, 66);
+    return {
+      ...entry, color: colors.get(entry.id), middle,
+      path: "M115,115 L" + p1.x + "," + p1.y +
+        " A103,103 0 " + (finish - start > Math.PI ? 1 : 0) +
+        " 1 " + p2.x + "," + p2.y + " Z",
+    };
+  });
+  return (
+    <article className="lr14-card" aria-label="Participación de venta por sucursal">
+      <h3>Venta por sucursal</h3>
+      <p className="lr14-subtitle">Participación en la venta neta registrada · {result.knownBranches}/{result.selectedBranches} sucursales con datos válidos</p>
+      {!result.chartable ? (
+        <p className="lr2-empty">No hay ventas netas verificables para calcular porcentajes.</p>
+      ) : (
+        <>
+          <div className="lr14-pie-layout">
+            <svg viewBox="0 0 230 230" className="lr14-pie"
+              role="img" aria-label={"Distribución porcentual de ventas registradas entre " + result.knownBranches + " sucursales"}>
+              <title>Participación de ventas registradas por sucursal</title>
+              {wedges.length === 1 ? (
+                <circle cx="115" cy="115" r="103" fill={wedges[0].color}>
+                  <title>{wedges[0].name + ": 100.0%"}</title>
+                </circle>
+              ) : wedges.map((entry) => (
+                <path key={entry.id} d={entry.path} fill={entry.color} stroke="#fff" strokeWidth="1">
+                  <title>{entry.name + ": " + formatShare(entry) + " · " + money(entry.net)}</title>
+                </path>
+              ))}
+              {wedges.filter((entry) => entry.tenths >= 85).map((entry) => (
+                <text key={entry.id} x={entry.middle.x} y={entry.middle.y + 4}
+                  className="lr14-pie-label" textAnchor="middle">{formatShare(entry)}</text>
+              ))}
+            </svg>
+            <div className="lr14-pie-legend">
+              {result.entries.map((entry) => (
+                <div key={entry.id} className="lr14-pie-legend-item">
+                  <span className="lr14-color" style={{ backgroundColor: colors.get(entry.id) }} aria-hidden="true" />
+                  <span className="lr14-branch-name">{entry.name}</span>
+                  <strong>{formatShare(entry)}</strong>
+                  <small>{entry.net === null ? entry.reason : money(entry.net)}</small>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="lr14-footnote">Total verificado: <strong>{money(result.total)}</strong></p>
+        </>
+      )}
+      {!result.complete && result.selectedBranches > 0 &&
+        <p className="lr14-warning">Cobertura parcial: los porcentajes representan únicamente las ventas verificadas, no el total de sucursales seleccionadas. Las sucursales sin información aparecen como No disponible.</p>}
+      <p className="lr14-footnote">Fuente: cortes comerciales OPS del mes seleccionado. Se excluyen históricos AppSheet.</p>
+    </article>
+  );
+}
+
+function ConversionFootfallChart({ days, selectedDate, setSelectedDate }) {
+  const known = days.filter((day) => day.conversion !== null || day.footfall !== null);
+  let peakConversion = 0n;
+  let peakFootfall = 0n;
+  for (const day of days) {
+    if (day.conversion !== null && day.conversion > peakConversion) peakConversion = day.conversion;
+    if (day.footfall !== null && day.footfall > peakFootfall) peakFootfall = day.footfall;
+  }
+  const convMax = (peakConversion > 5000n
+    ? (peakConversion + 1999n) / 2000n * 2000n
+    : 6000n);
+  const trafficStep = peakFootfall <= 30n ? 10n :
+    peakFootfall <= 300n ? 50n : peakFootfall <= 1500n ? 200n : 500n;
+  const trafficMax = peakFootfall > 0n
+    ? ((peakFootfall * 11n / 10n + trafficStep) / trafficStep) * trafficStep
+    : trafficStep;
+  const width = Math.max(720, days.length * 33 + 125);
+  const height = 270, left = 57, right = 58, top = 24, bottom = 43;
+  const chartBottom = height - bottom, chartHeight = chartBottom - top;
+  const innerWidth = width - left - right;
+  const stepX = innerWidth / Math.max(days.length, 1);
+  const x = (index) => left + stepX * (index + 0.5);
+  const yConversion = (value) => chartBottom -
+    Number(value * BigInt(chartHeight) / convMax);
+  const yFootfall = (value) => chartBottom -
+    Number(value * BigInt(chartHeight) / trafficMax);
+  const series = days.map((day, index) => ({
+    ...day, x: x(index),
+    lineY: day.conversion === null ? null : yConversion(day.conversion),
+    barY: day.footfall === null ? null : yFootfall(day.footfall),
+  }));
+  const segments = [];
+  let current = [];
+  for (const point of series) {
+    if (point.lineY === null) {
+      if (current.length) segments.push(current);
+      current = [];
+    } else current.push(point);
+  }
+  if (current.length) segments.push(current);
+  const activeDay = days.find((day) => day.date === selectedDate) ||
+    known[known.length - 1] || days[days.length - 1];
+  const dayLabel = (date) => date ? new Intl.DateTimeFormat("es-MX", {
+    day: "numeric", month: "short", year: "numeric", timeZone: "UTC",
+  }).format(new Date(date + "T00:00:00Z")) : "";
+  const dateStep = Math.max(1, Math.ceil(days.length / 11));
+  return (
+    <article className="lr14-card" aria-label="Conversión y afluencia a piso por fecha">
+      <h3>Conversión y afluencia a piso por fecha</h3>
+      <p className="lr14-subtitle">Consolidado de las sucursales seleccionadas · ejes independientes</p>
+      {!days.length ? (
+        <p className="lr2-empty">No hay fechas comerciales verificables.</p>
+      ) : (
+        <>
+          <div className="lr14-legend">
+            <span><i className="lr14-line-marker" aria-hidden="true" />Conversión · eje izquierdo</span>
+            <span><i className="lr14-bar-marker" aria-hidden="true" />Afluencia · eje derecho</span>
+          </div>
+          <div className="lr6-scroll lr14-combo-scroll" role="region"
+            tabIndex={0} aria-label="Gráfica de conversión y afluencia con dos ejes">
+            <svg width={width} height={height} viewBox={"0 0 " + width + " " + height}
+              className="lr6-chart" role="group" aria-label="Conversión porcentual y afluencia diaria">
+              {Array.from({ length: 4 }, (_, i) => {
+                const val = BigInt(3 - i);
+                const axisY = top + chartHeight * i / 3;
+                return (
+                  <g key={"axis-" + i}>
+                    <line className="lr6-grid" x1={left} x2={width - right} y1={axisY} y2={axisY} />
+                    <text className="lr14-axis-left" x={left - 9} y={axisY + 4}
+                      textAnchor="end">{formatHundredths(convMax * val / 3n, "%")}</text>
+                    <text className="lr14-axis-right" x={width - right + 9} y={axisY + 4}
+                      textAnchor="start">{number(trafficMax * val / 3n)}</text>
+                  </g>
+                );
+              })}
+              {series.map((day, index) => day.barY === null ? null : (
+                <rect key={"bar-" + day.date} x={day.x - Math.min(12, stepX * .3)}
+                  y={day.barY} width={Math.min(24, stepX * .6)}
+                  height={chartBottom - day.barY} fill="#274d92" rx="1" />
+              ))}
+              {segments.filter((segment) => segment.length > 1).map((segment, index) => (
+                <polyline key={"curve-" + index} className="lr14-conversion-line"
+                  points={segment.map((point) => point.x + "," + point.lineY).join(" ")}
+                  fill="none" />
+              ))}
+              {series.filter((day) => day.lineY !== null).map((day) => (
+                <circle key={"point-" + day.date} cx={day.x} cy={day.lineY}
+                  r={activeDay?.date === day.date ? 5.5 : 3.4}
+                  fill="#299cf0" stroke="#fff" strokeWidth="1.4" />
+              ))}
+              {series.map((day, index) =>
+                index % dateStep === 0 || index === series.length - 1 ? (
+                  <text className="lr6-axis" key={"date-" + day.date}
+                    x={day.x} y={height - 12} textAnchor="middle">{day.date.slice(8)}</text>
+                ) : null)}
+              {activeDay && (() => {
+                const activeIndex = days.findIndex((day) => day.date === activeDay.date);
+                return <line x1={x(activeIndex)} x2={x(activeIndex)}
+                  y1={top} y2={chartBottom} className="lr14-cursor" />;
+              })()}
+              {series.map((day) => (
+                <g key={"interaction-" + day.date} role="button" tabIndex={0}
+                  aria-label={dayLabel(day.date) + ": conversión " +
+                    formatHundredths(day.conversion, "%") + ", afluencia " + number(day.footfall)}
+                  onMouseEnter={() => setSelectedDate(day.date)}
+                  onFocus={() => setSelectedDate(day.date)}
+                  onClick={() => setSelectedDate(day.date)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setSelectedDate(day.date);
+                    }
+                  }}>
+                  <rect x={day.x - stepX / 2} y={top} width={stepX}
+                    height={chartHeight} fill="transparent" />
+                  <title>{dayLabel(day.date) + " · " +
+                    formatHundredths(day.conversion, "%") + " · " + number(day.footfall)}</title>
+                </g>
+              ))}
+            </svg>
+          </div>
+          {activeDay && (
+            <div className="lr14-selected-day" aria-live="polite">
+              <strong>{dayLabel(activeDay.date)}</strong>
+              <span>Conversión: <b>{formatHundredths(activeDay.conversion, "%")}</b></span>
+              <span>Afluencia: <b>{number(activeDay.footfall)}</b></span>
+            </div>
+          )}
+          {days.some((day) => day.conversion === null || day.footfall === null) &&
+            <p className="lr14-footnote">Los días sin cortes completos o con denominadores no válidos se muestran sin datos, nunca como cero.</p>}
+          <p className="lr14-footnote">Conversión = tickets ÷ afluencia × 100, calculada sobre los mismos cortes OPS.</p>
+        </>
+      )}
+    </article>
+  );
+}
+
+function CommercialVisualizations({ rows, dates, branches, selectedIds, selectedDate, setSelectedDate }) {
+  if (!selectedIds.length) return null;
+  const comboDays = branchDailyMetrics(rows, dates, selectedIds, "consolidated")[0]?.days || [];
+  return (
+    <section className="lr14-insights" aria-label="Distribución de ventas y tráfico en tiendas">
+      <div className="lr14-insights-heading">
+        <h3>Distribución y tráfico</h3>
+        <p>Ventas por sucursal y relación entre conversión y afluencia.</p>
+      </div>
+      <div className="lr14-insights-grid">
+        <SalesByBranchChart rows={rows} branches={branches} selectedIds={selectedIds} />
+        <ConversionFootfallChart days={comboDays}
+          selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+      </div>
+    </section>
+  );
+}
+
 function Daily({ rows, branches, initialBranch }) {
   const [selectedDate, setSelectedDate] = useState(null);
   const [mainIndicator, setMainIndicator] = useState("net");
@@ -646,6 +875,8 @@ function Daily({ rows, branches, initialBranch }) {
           </button>
         </div>
       )}
+      <CommercialVisualizations rows={rows} dates={calendarDates} branches={branches}
+        selectedIds={selectedIds} selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
     </section>
   );
 }

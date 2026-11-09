@@ -548,3 +548,38 @@ button,input,select { font:inherit; }
   .lr13-main-tabs [role="tab"]{flex:1 1 auto}
   .lr13-extra-chart{padding:10px}
 }
+
+
+/* BI-04 extended visualizations: share of verified sales and dual-axis visits/conversion. */
+.lr14-insights{margin-top:20px;padding-top:18px;border-top:1px solid #e3eaf2}
+.lr14-insights-heading{margin-bottom:13px}
+.lr14-insights-heading h3{font-size:16px;font-weight:800;color:#244563;margin:0 0 4px}
+.lr14-insights-heading p{color:#8190a5;font-size:12px;margin:0}
+.lr14-insights-grid{display:grid;grid-template-columns:minmax(270px,.95fr) minmax(0,1.55fr);gap:14px;align-items:start}
+.lr14-card{background:#fcfdff;border:1px solid #e0e9f3;border-radius:13px;padding:18px 17px;min-width:0}
+.lr14-card h3{font-size:14px;font-weight:800;line-height:1.35;color:#1e4167;margin:0 0 6px}
+.lr14-subtitle{color:#71859e;font-size:11px;margin:0 0 13px;line-height:1.45}
+.lr14-pie-layout{display:grid;grid-template-columns:minmax(130px,1fr) minmax(140px,1.1fr);align-items:center;gap:8px}
+.lr14-pie{display:block;width:100%;height:auto;max-width:255px;margin:0 auto;overflow:visible}
+.lr14-pie-label{fill:#fff;font-size:13px;font-weight:800;paint-order:stroke;stroke:rgba(15,42,80,.24);stroke-width:2px;stroke-linejoin:round}
+.lr14-pie-legend{display:flex;flex-direction:column;gap:7px;min-width:0}
+.lr14-pie-legend-item{display:grid;grid-template-columns:11px minmax(0,1fr) auto;align-items:center;gap:3px 6px;font-size:11px;color:#385677}
+.lr14-color{width:10px;height:10px;border-radius:3px}
+.lr14-branch-name{white-space:nowrap;text-overflow:ellipsis;overflow:hidden;font-weight:650}
+.lr14-pie-legend-item strong{font-variant-numeric:tabular-nums;color:#1a3f6b}
+.lr14-pie-legend-item small{grid-column:2/4;color:#778a9e;font-size:10px;font-variant-numeric:tabular-nums;line-height:1.1}
+.lr14-footnote{margin:9px 0 0;font-size:11px;color:#778ba0;line-height:1.5}
+.lr14-warning{margin:10px 0 0;padding:8px 9px;border-radius:8px;color:#825d25;background:#fff8ea;font-size:11px;line-height:1.5}
+.lr14-legend{display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap;color:#435d7c;font-size:11px;margin-bottom:10px}
+.lr14-legend>span{display:inline-flex;align-items:center;gap:6px}
+.lr14-line-marker{display:inline-block;width:20px;height:0;border-top:3px solid #299cf0;border-radius:3px}
+.lr14-bar-marker{display:inline-block;width:14px;height:11px;background:#274d92;border-radius:2px}
+.lr14-combo-scroll{padding:6px 4px 0}
+.lr14-axis-left,.lr14-axis-right{font-size:11px;font-weight:650;fill:#8095b0}
+.lr14-conversion-line{stroke:#299cf0;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.lr14-cursor{stroke:#9eb2cc;stroke-width:1;stroke-dasharray:3 3}
+.lr14-selected-day{display:flex;align-items:center;gap:8px 15px;flex-wrap:wrap;padding:10px 11px;margin:10px 0 0;border-radius:9px;background:#f3f7fc;color:#45607f;font-size:11px;font-variant-numeric:tabular-nums}
+.lr14-selected-day strong,.lr14-selected-day b{color:#244870}
+.lr14-combo-scroll g[role="button"]:focus-visible rect{stroke:#2071a6;stroke-width:2}
+@media(max-width:1150px){.lr14-insights-grid{grid-template-columns:1fr}.lr14-pie-layout{grid-template-columns:minmax(170px,.65fr) minmax(0,1fr)}}
+@media(max-width:650px){.lr14-card{padding:14px 10px}.lr14-pie-layout{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr)}.lr14-pie-legend-item{font-size:10px}.lr14-selected-day{gap:7px 11px}}
