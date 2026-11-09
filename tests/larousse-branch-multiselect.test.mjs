@@ -26,6 +26,8 @@ test("consolidated mode sums sales and denominators, never averages rates", () =
   assert.equal(series.length, 1);
   assert.equal(series[0].days[0].net, 20000n);
   assert.equal(series[0].days[0].footfall, 25n);
+  assert.equal(series[0].days[0].tickets, 5n);
+  assert.equal(series[0].days[0].pieces, 15n);
   assert.equal(series[0].days[0].conversion, 2000n); // 5 / 25 = 20.00%
   assert.equal(series[0].days[0].piecesPerTicket, 300n); // 15 / 5 = 3.00
 });
@@ -38,7 +40,7 @@ test("missing or duplicate branch-day blocks only that consolidated date", () =>
   assert.equal(series[0].net, 20000n);
   for (const day of series.slice(1)) {
     assert.equal(day.complete, false);
-    for (const key of ["net","footfall","conversion","piecesPerTicket"])
+    for (const key of ["net","footfall","tickets","pieces","conversion","piecesPerTicket"])
       assert.equal(day[key], null);
   }
 });
@@ -50,9 +52,15 @@ test("comparison mode retains valid branches independently and excludes historic
   assert.deepEqual(series.map((s) => s.id), ["a", "b"]);
   assert.equal(series[0].days[0].net, 10000n);
   assert.equal(series[1].days[0].net, 10000n);
+  assert.equal(series[1].days[0].tickets, 2n);
+  assert.equal(series[1].days[0].pieces, 6n);
   assert.equal(series[1].days[0].conversion, null);
   assert.equal(series[1].days[1].net, null);
   assert.equal(series[0].days[1].net, 10000n);
+  assert.equal(series[0].days[1].tickets, 2n);
+  assert.equal(series[0].days[1].pieces, 6n);
+  assert.equal(series[1].days[1].tickets, null);
+  assert.equal(series[1].days[1].pieces, null);
 });
 test("no selections create no series and unknown mode is rejected", () => {
   assert.deepEqual(branchDailyMetrics([], dates, [], "comparison"), []);

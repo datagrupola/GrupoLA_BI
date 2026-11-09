@@ -159,10 +159,13 @@ function CutReview({ rows, confirmed }) {
 }
 const DAILY_OPTIONS = [
   { key: "net", label: "Ventas", selectedLabel: "Venta neta del día" },
+  { key: "tickets", label: "Tickets", selectedLabel: "Tickets del día" },
+  { key: "pieces", label: "Piezas vendidas", selectedLabel: "Piezas vendidas del día" },
   { key: "footfall", label: "Afluencia", selectedLabel: "Afluencia del día" },
   { key: "conversion", label: "Conversión", selectedLabel: "Conversión del día" },
   { key: "piecesPerTicket", label: "Piezas por ticket", selectedLabel: "Piezas por ticket del día" },
 ];
+const DAILY_UNIT_INDICATORS = new Set(["tickets", "pieces", "footfall"]);
 function DailySeries({ rows, indicator, selectedDate, setSelectedDate, calendarDates, dailyData }) {
   const chosen = DAILY_OPTIONS.find((option) => option.key === indicator) || DAILY_OPTIONS[0];
   const observedDates = calendarDates || [...new Set(rows.map((row) => row.date))].sort();
@@ -209,14 +212,14 @@ function DailySeries({ rows, indicator, selectedDate, setSelectedDate, calendarD
   if (current.length) segments.push(current);
   const formatValue = (value) => {
     if (indicator === "net") return money(value);
-    if (indicator === "footfall") return number(value);
+    if (DAILY_UNIT_INDICATORS.has(indicator)) return number(value);
     return formatHundredths(value, indicator === "conversion" ? "%" : "");
   };
   const formatAxis = (value) => {
     if (indicator === "net") return new Intl.NumberFormat("es-MX", {
       style: "currency", currency: "MXN", notation: "compact", maximumFractionDigits: 1,
     }).format(Number(value) / 100);
-    if (indicator === "footfall") return new Intl.NumberFormat("es-MX", {
+    if (DAILY_UNIT_INDICATORS.has(indicator)) return new Intl.NumberFormat("es-MX", {
       notation: "compact", maximumFractionDigits: 1,
     }).format(Number(value));
     return formatHundredths(value, indicator === "conversion" ? "%" : "");
@@ -325,11 +328,11 @@ const BRANCH_COLORS = ["#246bad", "#b14f69", "#148575", "#a46a20", "#735cb3", "#
 function BranchComparisonSeries({ indicator, series, branches, dates, selectedDate, setSelectedDate }) {
   const chosen = DAILY_OPTIONS.find((option) => option.key === indicator) || DAILY_OPTIONS[0];
   const formatValue = (value) => indicator === "net" ? money(value) :
-    indicator === "footfall" ? number(value) :
+    DAILY_UNIT_INDICATORS.has(indicator) ? number(value) :
     formatHundredths(value, indicator === "conversion" ? "%" : "");
   const axisValue = (value) => indicator === "net"
     ? new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", notation: "compact", maximumFractionDigits: 1 }).format(Number(value) / 100)
-    : indicator === "footfall"
+    : DAILY_UNIT_INDICATORS.has(indicator)
       ? new Intl.NumberFormat("es-MX", { notation: "compact", maximumFractionDigits: 1 }).format(Number(value))
       : formatValue(value);
   const dayLabel = (date) => date ? new Intl.DateTimeFormat("es-MX", {

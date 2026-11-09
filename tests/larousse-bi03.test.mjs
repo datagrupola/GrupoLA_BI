@@ -35,7 +35,7 @@ test("BI-03: daily rates use aggregate numerators and denominators from the same
   assert.equal(days[0].conversion, 4000n); // 4 / 10 * 100 = 40.00 %
   assert.equal(days[0].piecesPerTicket, 300n); // 12 / 4 = 3.00
   assert.equal(days[0].count, 2);
-  for (const key of ["net", "footfall", "conversion", "piecesPerTicket"])
+  for (const key of ["net", "tickets", "pieces", "footfall", "conversion", "piecesPerTicket"])
     assert.equal(days[1][key], null, "Missing day is never a measured zero: " + key);
 });
 
@@ -63,16 +63,55 @@ test("BI-03: projection for a selected branch preserves the global cutoff, not t
   assert.equal(commercialProjection(rows, targets, "2026-11", null).projectedNet, null);
 });
 
-test("BI-03: UI exposes four daily metrics and per-branch projection without changing endpoint contract", async () => {
+test("BI-03: UI exposes six daily metrics and per-branch projection without changing endpoint contract", async () => {
   const { readFileSync } = await import("node:fs");
   const src = readFileSync(new URL("../components/LaRousseDashboard.js", import.meta.url), "utf8");
   assert.match(src, /dailyCommercialMetrics\(rows, dates\)/);
-  for (const label of ["Ventas", "Afluencia", "Conversión", "Piezas por ticket"])
+  for (const label of ["Ventas", "Tickets", "Piezas vendidas", "Afluencia", "Conversión", "Piezas por ticket"])
     assert.ok(src.includes('label: "' + label + '"'));
   assert.match(src, /commercialProjection\(scopedRows, scopedTargets, month, globalCutoff\)/);
   assert.match(src, /<th>Proyección de cierre<\/th>/);
-  assert.match(src, /<th>Cierre vs\. meta<\/th>/);
+  assert.match(src, /<th>Cumplimiento proyectado<\/th>/);
   assert.match(src, /branch \? read\("([^"]*)"\)\.catch\(\(\) => null\)/);
   assert.match(src, /commercialProjection\(rows, data\?\.targets \|\| \[\], month, globalCutoff\)/);
   assert.match(src, /Ritmo diario de venta/);
+});
+
+
+test("BI-03: tickets and pieces remain raw integer totals, not ratios, with N/A for incomplete entries", () => {
+  const [valid, partial, zero] = [
+    dailyCommercialMetrics([
+      row({ tickets: "2", pieces: "5" }),
+      row({ cut_id: "another", revision_id: "another", tickets: "3", pieces: "7" }),
+    ], ["2026-11-06"])[0],
+    dailyCommercialMetrics([
+      row({ tickets: null, pieces: "5" }),
+      row({ cut_id: "another", revision_id: "another", tickets: "3", pieces: null }),
+    ], ["2026-11-06"])[0],
+    dailyCommercialMetrics([row({ tickets: "0", pieces: "0" })], ["2026-11-06"])[0],
+  ];
+  assert.equal(valid.tickets, 5n);
+  assert.equal(valid.pieces, 12n);
+  assert.equal(valid.piecesPerTicket, 240n);
+  assert.equal(partial.tickets, null);
+  assert.equal(partial.pieces, null);
+  assert.equal(zero.tickets, 0n);
+  assert.equal(zero.pieces, 0n);
+  assert.equal(zero.piecesPerTicket, null);
+});
+
+test("BI-03: six chart options use whole-unit number formatting in both view modes", async () => {
+  const { readFileSync } = await import("node:fs");
+  const src = readFileSync(new URL("../components/LaRousseDashboard.js", import.meta.url), "utf8");
+  const options = src.slice(src.indexOf("const DAILY_OPTIONS = ["), src.indexOf("function DailySeries("));
+  for (const [key, label] of [["net","Ventas"], ["tickets","Tickets"],
+    ["pieces","Piezas vendidas"], ["footfall","Afluencia"],
+    ["conversion","Conversión"], ["piecesPerTicket","Piezas por ticket"]])
+    assert.ok(options.includes('{ key: "'+key+'", label: "'+label+'" }') ||
+      options.includes('{ key: "'+key+'", label: "'+label+'",'),
+      "Missing option " + key);
+  assert.match(options, /const DAILY_UNIT_INDICATORS = new Set\(\["tickets", "pieces", "footfall"\]\)/);
+  assert.equal((src.match(/DAILY_UNIT_INDICATORS\.has\(indicator\)/g) || []).length, 4);
+  assert.match(src, /additionalIndicators\.length >= DAILY_OPTIONS\.length - 1/);
+  assert.match(src, /const \[selectedDate, setSelectedDate\] = useState\(null\)/);
 });
