@@ -523,12 +523,8 @@ function SalesByBranchChart({ rows, branches, selectedIds }) {
               ))}
             </div>
           </div>
-          <p className="lr14-footnote">Total verificado: <strong>{money(result.total)}</strong></p>
         </>
       )}
-      {!result.complete && result.selectedBranches > 0 &&
-        <p className="lr14-warning">Cobertura parcial: los porcentajes representan únicamente las ventas verificadas, no el total de sucursales seleccionadas. Las sucursales sin información aparecen como No disponible.</p>}
-      <p className="lr14-footnote">Fuente: cortes comerciales OPS del mes seleccionado. Se excluyen históricos AppSheet.</p>
     </article>
   );
 }
@@ -660,9 +656,6 @@ function ConversionFootfallChart({ days, selectedDate, setSelectedDate }) {
               <span>Afluencia: <b>{number(activeDay.footfall)}</b></span>
             </div>
           )}
-          {days.some((day) => day.conversion === null || day.footfall === null) &&
-            <p className="lr14-footnote">Los días sin cortes completos o con denominadores no válidos se muestran sin datos, nunca como cero.</p>}
-          <p className="lr14-footnote">Conversión = tickets ÷ afluencia × 100, calculada sobre los mismos cortes OPS.</p>
         </>
       )}
     </article>
