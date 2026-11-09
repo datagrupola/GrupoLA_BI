@@ -555,8 +555,10 @@ button,input,select { font:inherit; }
 .lr14-insights-heading{margin-bottom:13px}
 .lr14-insights-heading h3{font-size:16px;font-weight:800;color:#244563;margin:0 0 4px}
 .lr14-insights-heading p{color:#8190a5;font-size:12px;margin:0}
-.lr14-insights-grid{display:grid;grid-template-columns:minmax(270px,.95fr) minmax(0,1.55fr);gap:14px;align-items:start}
-.lr14-card{background:#fcfdff;border:1px solid #e0e9f3;border-radius:13px;padding:18px 17px;min-width:0}
+.lr14-insights-grid{display:grid;grid-template-columns:minmax(270px,.95fr) minmax(0,1.55fr);gap:14px;align-items:stretch}
+.lr14-card{background:#fcfdff;border:1px solid #e0e9f3;border-radius:13px;padding:18px 17px;min-width:0;height:100%;box-sizing:border-box}
+.lr14-insights-grid>.lr14-card:first-child{display:flex;flex-direction:column}
+.lr14-insights-grid>.lr14-card:first-child .lr14-pie-layout{flex:1;align-content:center}
 .lr14-card h3{font-size:14px;font-weight:800;line-height:1.35;color:#1e4167;margin:0 0 6px}
 .lr14-subtitle{color:#71859e;font-size:11px;margin:0 0 13px;line-height:1.45}
 .lr14-pie-layout{display:grid;grid-template-columns:minmax(130px,1fr) minmax(140px,1.1fr);align-items:center;gap:8px}

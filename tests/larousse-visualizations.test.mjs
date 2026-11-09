@@ -100,4 +100,7 @@ test("UI renders native pie and dual-axis charts under existing branch selection
   ])assert.ok(src.includes(snippet),snippet);
   assert.match(src, /<CommercialVisualizations rows=\{rows\} dates=\{calendarDates\}/);
   assert.match(css, /\.lr14-insights-grid/);
+  assert.match(css, /\.lr14-insights-grid\{[^}]*align-items:stretch/);
+  assert.match(css, /\.lr14-card\{[^}]*height:100%/);
+  assert.match(css, /\.lr14-insights-grid>\.lr14-card:first-child \.lr14-pie-layout\{flex:1;align-content:center\}/);
 });
