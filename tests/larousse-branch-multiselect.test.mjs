@@ -76,4 +76,10 @@ test("UI exposes branch multi-selection plus independent comparison and consolid
   assert.match(src, /aria-label="Seleccionar todas las sucursales"/);
   assert.doesNotMatch(src, /<fieldset className="lr11-branch-picker">/);
   assert.match(src, /<Daily key=\{month \+ ":" \+ branch\}/);
+  assert.match(src, /aria-controls="lr13-main-panel"/);
+  assert.match(src, /role="tabpanel"/);
+  assert.match(src, /additionalIndicators\.length >= DAILY_OPTIONS\.length - 1/);
+  assert.match(src, /next !== previous && current\.includes\(next\)/);
+  assert.match(src, /current\.filter\(\(value\) => value !== key\)/);
+  assert.match(src, /renderMetricChart\(indicator\)/);
 });

@@ -97,10 +97,17 @@ test("BI-04: unavailable previous baseline or null denominators stay unavailable
 test("BI-04: UI supports multiple separate synced series and one global comparison control", () => {
   const src = readFileSync(new URL("../components/LaRousseDashboard.js", import.meta.url), "utf8");
   const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
-  assert.match(src, /selectedIndicators\.includes\(option\.key\)/);
-  assert.match(src, /current\.length > 1/); // Cannot unselect all series
+  assert.match(src, /role="tablist" aria-label="Métrica principal de evolución diaria"/);
+  assert.match(src, /aria-selected=\{mainIndicator === option\.key\}/);
+  assert.match(src, /chooseMainIndicator\(option\.key\)/);
+  assert.match(src, /renderMetricChart\(mainIndicator\)/);
   assert.match(src, /function DailySeries\(/);
-  assert.match(src, /<DailySeries key={option\.key}/);
+  assert.match(src, /function BranchComparisonSeries\(/);
+  assert.match(src, /additionalIndicators\.map\(\(indicator, index\)/);
+  assert.match(src, /Agregar otra gráfica/);
+  assert.match(src, /changeAdditionalIndicator\(indicator, event\.target\.value\)/);
+  assert.match(src, /setAdditionalIndicators\(\(current\) =>\s*current\.filter/);
+  assert.match(css, /\.lr13-extra-chart/);
   assert.match(src, /selectedDate={selectedDate} setSelectedDate={setSelectedDate}/);
   assert.match(css, /\.lr10-series-list/);
   assert.match(src, /Comparación temporal global/);

@@ -462,7 +462,8 @@ function BranchComparisonSeries({ indicator, series, branches, dates, selectedDa
 
 function Daily({ rows, branches, initialBranch }) {
   const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedIndicators, setSelectedIndicators] = useState(["net"]);
+  const [mainIndicator, setMainIndicator] = useState("net");
+  const [additionalIndicators, setAdditionalIndicators] = useState([]);
   const [selectedBranches, setSelectedBranches] = useState(
     () => initialBranch ? [initialBranch] : branches.map((item) => item.id)
   );
@@ -493,12 +494,33 @@ function Daily({ rows, branches, initialBranch }) {
   const calendarDates = datesForTimeline(rows);
   const series = branchDailyMetrics(rows, calendarDates, selectedIds, branchMode);
   const scopedRows = rows.filter((row) => selectedIds.includes(row.branch_id));
-  const toggleIndicator = (key) => setSelectedIndicators((current) => {
-    if (current.includes(key)) {
-      return current.length > 1 ? current.filter((value) => value !== key) : current;
-    }
-    return [...current, key];
+  const chooseMainIndicator = (key) => {
+    if (!DAILY_OPTIONS.some((option) => option.key === key)) return;
+    setMainIndicator(key);
+    setAdditionalIndicators((current) => current.filter((value) => value !== key));
+  };
+  const addAdditionalIndicator = () => setAdditionalIndicators((current) => {
+    const next = DAILY_OPTIONS.find((option) =>
+      option.key !== mainIndicator && !current.includes(option.key));
+    return next ? [...current, next.key] : current;
   });
+  const changeAdditionalIndicator = (previous, next) => {
+    setAdditionalIndicators((current) => {
+      if (next === mainIndicator ||
+          !DAILY_OPTIONS.some((option) => option.key === next) ||
+          (next !== previous && current.includes(next))) return current;
+      return current.map((value) => value === previous ? next : value);
+    });
+  };
+  const renderMetricChart = (indicator) => branchMode === "comparison" ? (
+    <BranchComparisonSeries indicator={indicator}
+      series={series} branches={branches} dates={calendarDates}
+      selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+  ) : (
+    <DailySeries rows={scopedRows} indicator={indicator}
+      calendarDates={calendarDates} dailyData={series[0]?.days}
+      selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+  );
   const toggleBranch = (id) => setSelectedBranches((current) =>
     current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
   const shownBranches = branches.filter((item) =>
@@ -513,13 +535,27 @@ function Daily({ rows, branches, initialBranch }) {
       <div className="lr9-daily-header lr12-daily-header">
         <h2>Evolución diaria</h2>
       </div>
-      <div className="lr9-indicator-picker lr12-metric-tabs" role="group"
-        aria-label="Indicadores de evolución diaria (selección múltiple)">
-        {DAILY_OPTIONS.map((option) => (
-          <button key={option.key} type="button"
-            className={selectedIndicators.includes(option.key) ? "lr9-indicator-active" : ""}
-            aria-pressed={selectedIndicators.includes(option.key)}
-            onClick={() => toggleIndicator(option.key)}>
+      <div className="lr9-indicator-picker lr12-metric-tabs lr13-main-tabs"
+        role="tablist" aria-label="Métrica principal de evolución diaria">
+        {DAILY_OPTIONS.map((option, index) => (
+          <button key={option.key} id={"lr13-tab-" + option.key}
+            type="button" role="tab" aria-controls="lr13-main-panel"
+            aria-selected={mainIndicator === option.key}
+            tabIndex={mainIndicator === option.key ? 0 : -1}
+            className={mainIndicator === option.key ? "lr9-indicator-active" : ""}
+            onClick={() => chooseMainIndicator(option.key)}
+            onKeyDown={(event) => {
+              const last = DAILY_OPTIONS.length - 1;
+              let nextIndex = null;
+              if (event.key === "ArrowRight") nextIndex = (index + 1) % DAILY_OPTIONS.length;
+              if (event.key === "ArrowLeft") nextIndex = (index + last) % DAILY_OPTIONS.length;
+              if (event.key === "Home") nextIndex = 0;
+              if (event.key === "End") nextIndex = last;
+              if (nextIndex === null) return;
+              event.preventDefault();
+              chooseMainIndicator(DAILY_OPTIONS[nextIndex].key);
+              event.currentTarget.parentElement?.querySelectorAll('[role="tab"]')[nextIndex]?.focus();
+            }}>
             {option.label}
           </button>
         ))}
@@ -575,17 +611,39 @@ function Daily({ rows, branches, initialBranch }) {
       {!selectedIds.length ? (
         <p className="lr2-empty">Selecciona al menos una sucursal para mostrar las series.</p>
       ) : (
-        <div className="lr10-series-list">
-          {DAILY_OPTIONS.filter((option) => selectedIndicators.includes(option.key))
-            .map((option) => branchMode === "comparison" ? (
-              <BranchComparisonSeries key={option.key} indicator={option.key}
-                series={series} branches={branches} dates={calendarDates}
-                selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
-            ) : (
-              <DailySeries key={option.key} rows={scopedRows} indicator={option.key}
-                calendarDates={calendarDates} dailyData={series[0]?.days}
-                selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
-            ))}
+        <div className="lr10-series-list lr13-chart-list">
+          <div id="lr13-main-panel" role="tabpanel" tabIndex={0}
+            aria-labelledby={"lr13-tab-" + mainIndicator} className="lr13-main-chart">
+            {renderMetricChart(mainIndicator)}
+          </div>
+          {additionalIndicators.map((indicator, index) => (
+            <div key={indicator} className="lr13-extra-chart">
+              <div className="lr13-extra-heading">
+                <select aria-label={"Métrica de gráfica adicional " + (index + 1)}
+                  value={indicator}
+                  onChange={(event) => changeAdditionalIndicator(indicator, event.target.value)}>
+                  {DAILY_OPTIONS.filter((option) =>
+                    option.key === indicator ||
+                    (option.key !== mainIndicator && !additionalIndicators.includes(option.key)))
+                    .map((option) => (
+                      <option key={option.key} value={option.key}>{option.label}</option>
+                    ))}
+                </select>
+                <button type="button" className="lr13-remove-chart"
+                  aria-label={"Quitar gráfica de " + DAILY_OPTIONS.find((option) => option.key === indicator).label}
+                  onClick={() => setAdditionalIndicators((current) =>
+                    current.filter((value) => value !== indicator))}>×</button>
+              </div>
+              {renderMetricChart(indicator)}
+            </div>
+          ))}
+          <button type="button" className="lr13-add-chart"
+            disabled={additionalIndicators.length >= DAILY_OPTIONS.length - 1}
+            onClick={addAdditionalIndicator}>
+            <span aria-hidden="true">+</span>
+            {additionalIndicators.length >= DAILY_OPTIONS.length - 1
+              ? "Todas las gráficas agregadas" : "Agregar otra gráfica"}
+          </button>
         </div>
       )}
     </section>

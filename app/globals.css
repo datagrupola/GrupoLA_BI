@@ -520,3 +520,31 @@ button,input,select { font:inherit; }
 .lr11-mode-buttons{width:100%}
 .lr11-mode-buttons button{flex:1}
 }
+
+
+/* BI-04: single primary metric with optional additional charts. */
+.lr13-main-tabs{display:flex;max-width:100%;margin-bottom:12px}
+.lr13-main-tabs [role="tab"]{position:relative;transition:background .12s,color .12s}
+.lr13-main-tabs [role="tab"][aria-selected="true"]{color:#173f70;background:#fff;box-shadow:0 1px 5px rgba(23,52,92,.11)}
+.lr13-main-tabs [role="tab"][aria-selected="false"]{color:#687f97}
+.lr13-main-tabs [role="tab"]:focus-visible{outline:2px solid #197ab9;outline-offset:2px}
+.lr13-chart-list{gap:12px}
+.lr13-main-chart,.lr13-extra-chart{min-width:0}
+.lr13-main-chart:focus-visible{outline:2px solid #197ab9;outline-offset:3px;border-radius:12px}
+.lr13-extra-chart{padding:12px 14px 14px;border:1px solid #e1e9f3;border-radius:13px;background:#fcfdff}
+.lr13-extra-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.lr13-extra-heading select{min-width:150px;max-width:100%;padding:8px 12px;border:1px solid #d8e2ee;border-radius:8px;background:#fff;color:#254565;font-size:12px;font-weight:750}
+.lr13-extra-chart>.lr10-series{padding:0;border:0;border-radius:0;background:transparent}
+.lr13-extra-chart .lr10-series-title{display:none}
+.lr13-remove-chart{flex:none;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid #e1e8ef;border-radius:9px;background:#fff;color:#6d8093;font-size:22px;line-height:1;cursor:pointer}
+.lr13-remove-chart:hover{color:#a33d4e;border-color:#ecc7cc;background:#fff7f8}
+.lr13-add-chart{width:100%;padding:12px;border:1px dashed #c8d6e8;border-radius:11px;background:#f8fbff;color:#245d93;font-size:12px;font-weight:750;cursor:pointer}
+.lr13-add-chart:hover:not(:disabled){background:#edf5fc;border-color:#7eb0d7}
+.lr13-add-chart span{font-size:17px;vertical-align:-1px;margin-right:6px}
+.lr13-add-chart:disabled{color:#8293a5;cursor:default;border-style:solid;background:#fafbfc}
+.lr13-extra-heading select:focus-visible,.lr13-remove-chart:focus-visible,.lr13-add-chart:focus-visible{outline:2px solid #197ab9;outline-offset:2px}
+@media(max-width:700px){
+  .lr13-main-tabs{width:100%;flex-wrap:wrap}
+  .lr13-main-tabs [role="tab"]{flex:1 1 auto}
+  .lr13-extra-chart{padding:10px}
+}
