@@ -5,7 +5,7 @@ import { reviewCutCounts } from "../lib/larousse-review.mjs";
 import { dailyCommercialMetrics } from "../lib/larousse-daily.mjs";
 import { datesForTimeline, branchDailyMetrics } from "../lib/larousse-branch-series.mjs";
 import { salesParticipation } from "../lib/larousse-visualizations.mjs";
-import { projectedPerformanceTier } from "../lib/larousse-performance.mjs";
+import { projectedPerformanceTier, compareProjectedCompliance } from "../lib/larousse-performance.mjs";
 import { comparisonWindows, periodComparison } from "../lib/larousse-comparison.mjs";
 import {
   commercialMetrics,
@@ -966,13 +966,7 @@ function Branches({ data, selected, overall, month, globalCutoff }) {
         count: scopedRows.length,
       };
     })
-    .sort((a, b) =>
-      a.m.sales.knownNet === b.m.sales.knownNet
-        ? a.name.localeCompare(b.name)
-        : a.m.sales.knownNet > b.m.sales.knownNet
-          ? -1
-          : 1,
-    );
+    .sort(compareProjectedCompliance);
   return (
     <section className="lr2-panel lr15-branch-performance">
       <h2>Desempeño por sucursal</h2>
@@ -984,7 +978,7 @@ function Branches({ data, selected, overall, month, globalCutoff }) {
               <th>Sucursal</th>
               <th>Venta neta</th>
               <th>Proyección de cierre</th>
-              <th>Cierre vs. meta</th>
+              <th>Cumplimiento proyectado</th>
               <th>Meta</th>
               <th>Avance</th>
               <th>Faltante</th>
