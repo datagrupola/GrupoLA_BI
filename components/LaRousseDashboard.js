@@ -277,25 +277,41 @@ function DailySeries({ rows, indicator, selectedDate, setSelectedDate, calendarD
                     fill="none" strokeLinecap="round" strokeLinejoin="round" />
                 ) : null
               )}
+              {points.some((point) => point.date === selected.date) && (
+                <line className="lr18-crosshair" y1={top} y2={chartBase}
+                  x1={points.find((point) => point.date === selected.date).x}
+                  x2={points.find((point) => point.date === selected.date).x} />
+              )}
               {points.filter((point) => point.y !== null).map((point) => (
-                <g key={point.date} role="button" tabIndex={0}
-                  aria-label={dayLabel(point.date) + ": " + formatValue(point[indicator])}
-                  aria-pressed={selected.date === point.date}
-                  onMouseEnter={() => setSelectedDate(point.date)}
-                  onFocus={() => setSelectedDate(point.date)}
-                  onClick={() => setSelectedDate(point.date)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      setSelectedDate(point.date);
-                    }
-                  }}>
-                  <circle cx={point.x} cy={point.y} r={16} fill="transparent" />
-                  <circle className={selected.date === point.date ? "lr6-dot lr6-dot-active" : "lr6-dot"}
-                    cx={point.x} cy={point.y} r={selected.date === point.date ? 6 : 4.5} />
-                  <title>{dayLabel(point.date) + " · " + formatValue(point[indicator])}</title>
-                </g>
+                <circle key={"dot-" + point.date}
+                  className={"lr6-dot lr18-visual-dot" +
+                    (selected.date === point.date ? " lr6-dot-active" : "")}
+                  cx={point.x} cy={point.y} r={selected.date === point.date ? 6 : 4.5}
+                  aria-hidden="true" />
               ))}
+              {points.map((point, index) => {
+                const from = index === 0 ? left : (points[index - 1].x + point.x) / 2;
+                const to = index === points.length - 1 ? chartWidth - right :
+                  (point.x + points[index + 1].x) / 2;
+                return (
+                  <g key={"hover-" + point.date} role="button" tabIndex={0}
+                    aria-label={dayLabel(point.date) + ": " + formatValue(point[indicator])}
+                    aria-pressed={selected.date === point.date}
+                    onMouseEnter={() => setSelectedDate(point.date)}
+                    onFocus={() => setSelectedDate(point.date)}
+                    onClick={() => setSelectedDate(point.date)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setSelectedDate(point.date);
+                      }
+                    }}>
+                    <rect className="lr18-hit-zone" x={from} y={top}
+                      width={to - from} height={chartInnerHeight} />
+                    <title>{dayLabel(point.date) + " · " + formatValue(point[indicator])}</title>
+                  </g>
+                );
+              })}
             </svg>
           </div>
           {daily.some((day) => day[indicator] === null) &&
@@ -423,26 +439,45 @@ function BranchComparisonSeries({ indicator, series, branches, dates, selectedDa
                     className="lr6-series" style={{ stroke: item.color }}
                     points={segment.map((point) => point.x + "," + point.y).join(" ")}
                     fill="none" strokeLinecap="round" strokeLinejoin="round" />))}
+              {dates.includes(activeDate) && (
+                <line className="lr18-crosshair" y1={top} y2={baseY}
+                  x1={x(dates.indexOf(activeDate))} x2={x(dates.indexOf(activeDate))} />
+              )}
               {plotted.flatMap((item) => item.points.filter((point) => point.y !== null).map((point) => (
-                <g key={item.id + "-" + point.date} role="button" tabIndex={0}
-                  aria-label={item.name + " · " + dayLabel(point.date) + ": " + formatValue(point[indicator])}
-                  aria-pressed={activeDate === point.date}
-                  onMouseEnter={() => setSelectedDate(point.date)}
-                  onFocus={() => setSelectedDate(point.date)}
-                  onClick={() => setSelectedDate(point.date)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      setSelectedDate(point.date);
-                    }
-                  }}>
-                  <circle cx={point.x} cy={point.y} r={15} fill="transparent" />
-                  <circle className={activeDate === point.date ? "lr6-dot lr6-dot-active" : "lr6-dot"}
-                    style={{ stroke: item.color, fill: activeDate === point.date ? item.color : "#fff" }}
-                    cx={point.x} cy={point.y} r={activeDate === point.date ? 6 : 4.5} />
-                  <title>{item.name + " · " + dayLabel(point.date) + ": " + formatValue(point[indicator])}</title>
-                </g>
+                <circle key={item.id + "-" + point.date}
+                  className={"lr6-dot lr18-visual-dot" +
+                    (activeDate === point.date ? " lr6-dot-active" : "")}
+                  style={{ stroke: item.color, fill: activeDate === point.date ? item.color : "#fff" }}
+                  cx={point.x} cy={point.y} r={activeDate === point.date ? 6 : 4.5}
+                  aria-hidden="true" />
               )))}
+              {dates.map((date, index) => {
+                const from = index === 0 ? left : (x(index - 1) + x(index)) / 2;
+                const to = index === dates.length - 1 ? chartWidth - right :
+                  (x(index) + x(index + 1)) / 2;
+                return (
+                  <g key={"hover-" + date} role="button" tabIndex={0}
+                    aria-label={dayLabel(date) + ": " + plotted.map((item) =>
+                      item.name + " " + formatValue(item.days[index]?.[indicator] ?? null)
+                    ).join(", ")}
+                    aria-pressed={activeDate === date}
+                    onMouseEnter={() => setSelectedDate(date)}
+                    onFocus={() => setSelectedDate(date)}
+                    onClick={() => setSelectedDate(date)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setSelectedDate(date);
+                      }
+                    }}>
+                    <rect className="lr18-hit-zone" x={from} y={top}
+                      width={to - from} height={innerHeight} />
+                    <title>{dayLabel(date) + " · " + plotted.map((item) =>
+                      item.name + ": " + formatValue(item.days[index]?.[indicator] ?? null)
+                    ).join(" · ")}</title>
+                  </g>
+                );
+              })}
             </svg>
           </div>
           {plotted.some((item) => item.days.some((day) => day[indicator] === null)) &&
@@ -467,10 +502,12 @@ function BranchComparisonSeries({ indicator, series, branches, dates, selectedDa
 
 
 function SalesByBranchChart({ rows, branches, selectedIds }) {
+  const [hoveredBranch, setHoveredBranch] = useState(null);
   const result = salesParticipation(rows, branches, selectedIds);
   const colors = new Map(branches.map((item, index) =>
     [item.id, BRANCH_COLORS[index % BRANCH_COLORS.length]]));
   const slices = result.entries.filter((entry) => entry.net !== null && entry.net > 0n);
+  const focusedSlice = slices.find((entry) => entry.id === hoveredBranch) || null;
   const formatShare = (entry) => entry.tenths === null ? "No disponible"
     : (Math.floor(entry.tenths / 10) + "." + entry.tenths % 10 + "%");
   const coordinate = (angle, radius) => ({
@@ -499,26 +536,57 @@ function SalesByBranchChart({ rows, branches, selectedIds }) {
       ) : (
         <>
           <div className="lr14-pie-layout">
-            <svg viewBox="0 0 230 230" className="lr14-pie"
-              role="img" aria-label="Gráfica circular de venta por sucursal">
-              <title>Participación de ventas registradas por sucursal</title>
-              {wedges.length === 1 ? (
-                <circle cx="115" cy="115" r="103" fill={wedges[0].color}>
-                  <title>{wedges[0].name + ": 100.0%"}</title>
-                </circle>
-              ) : wedges.map((entry) => (
-                <path key={entry.id} d={entry.path} fill={entry.color} stroke="#fff" strokeWidth="1">
-                  <title>{entry.name + ": " + formatShare(entry) + " · " + money(entry.net)}</title>
-                </path>
-              ))}
-              {wedges.filter((entry) => entry.tenths >= 85).map((entry) => (
-                <text key={entry.id} x={entry.middle.x} y={entry.middle.y + 4}
-                  className="lr14-pie-label" textAnchor="middle">{formatShare(entry)}</text>
-              ))}
-            </svg>
+            <div className="lr18-pie-stage">
+              <svg viewBox="0 0 230 230" className="lr14-pie"
+                role="group" aria-label="Gráfica circular de venta por sucursal">
+                <title>Participación de ventas registradas por sucursal</title>
+                {wedges.length === 1 ? (
+                  <circle cx="115" cy="115" r="103" fill={wedges[0].color}
+                    tabIndex={0}
+                    className={"lr18-pie-slice" + (hoveredBranch === wedges[0].id ? " lr18-pie-active" : "")}
+                    onMouseEnter={() => setHoveredBranch(wedges[0].id)}
+                    onMouseLeave={() => setHoveredBranch(null)}
+                    onFocus={() => setHoveredBranch(wedges[0].id)}
+                    onBlur={() => setHoveredBranch(null)}
+                    aria-label={wedges[0].name + ": 100.0%"}>
+                    <title>{wedges[0].name + ": 100.0%"}</title>
+                  </circle>
+                ) : wedges.map((entry) => (
+                  <path key={entry.id} d={entry.path} fill={entry.color} stroke="#fff" strokeWidth="1"
+                    tabIndex={0}
+                    className={"lr18-pie-slice" +
+                      (hoveredBranch === entry.id ? " lr18-pie-active" :
+                        hoveredBranch ? " lr18-pie-muted" : "")}
+                    onMouseEnter={() => setHoveredBranch(entry.id)}
+                    onMouseLeave={() => setHoveredBranch(null)}
+                    onFocus={() => setHoveredBranch(entry.id)}
+                    onBlur={() => setHoveredBranch(null)}
+                    aria-label={entry.name + ": " + formatShare(entry) + " · " + money(entry.net)}>
+                    <title>{entry.name + ": " + formatShare(entry) + " · " + money(entry.net)}</title>
+                  </path>
+                ))}
+                {wedges.filter((entry) => entry.tenths >= 85).map((entry) => (
+                  <text key={entry.id} x={entry.middle.x} y={entry.middle.y + 4}
+                    className="lr14-pie-label" textAnchor="middle">{formatShare(entry)}</text>
+                ))}
+              </svg>
+              {focusedSlice && (
+                <div className="lr18-pie-tooltip" role="tooltip">
+                  <strong>{focusedSlice.name} · {formatShare(focusedSlice)}</strong>
+                  <span>{money(focusedSlice.net)}</span>
+                </div>
+              )}
+            </div>
             <div className="lr14-pie-legend">
               {result.entries.map((entry) => (
-                <div key={entry.id} className="lr14-pie-legend-item">
+                <div key={entry.id}
+                  className={"lr14-pie-legend-item lr18-legend-entry" +
+                    (hoveredBranch === entry.id ? " lr18-legend-active" : "")}
+                  tabIndex={entry.net !== null && entry.net > 0n ? 0 : undefined}
+                  onMouseEnter={() => setHoveredBranch(entry.net !== null && entry.net > 0n ? entry.id : null)}
+                  onMouseLeave={() => setHoveredBranch(null)}
+                  onFocus={() => setHoveredBranch(entry.net !== null && entry.net > 0n ? entry.id : null)}
+                  onBlur={() => setHoveredBranch(null)}>
                   <span className="lr14-color" style={{ backgroundColor: colors.get(entry.id) }} aria-hidden="true" />
                   <span className="lr14-branch-name">{entry.name}</span>
                   <strong>{formatShare(entry)}</strong>
@@ -990,9 +1058,12 @@ function Branches({ data, selected, overall, month, globalCutoff }) {
           </thead>
           <tbody>
             {groups.map((b) => (
-              <tr key={b.id} className={
-                "lr15-performance-" + (projectedPerformanceTier(b.projection.projectedNet, b.m.target) || "neutral")
-              }>
+              <tr key={b.id} tabIndex={0}
+                aria-label={b.name + " · Cumplimiento proyectado " +
+                  percent(b.projection.projectedNet, b.m.target)}
+                className={
+                  "lr15-performance-" + (projectedPerformanceTier(b.projection.projectedNet, b.m.target) || "neutral")
+                }>
                 <th>{b.name}</th>
                 <td>
                   {b.m.sales.known
