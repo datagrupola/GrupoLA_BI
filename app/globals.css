@@ -710,3 +710,8 @@ button,input,select { font:inherit; }
  .lr16-ranking-mobile-item,.lr15-branch-performance .lr16-ranking-desktop tbody tr>th,
  .lr15-branch-performance .lr16-ranking-desktop tbody tr>td{transition:none}
 }
+
+
+/* Provenance for comparisons spanning AppSheet historical reports. */
+.lr19-comparison-source{display:block;margin-top:5px;font-size:11px;font-weight:650;color:#526a85}
+.lr19-historical-notice{font-size:11px;color:#485f79;line-height:1.5;margin:5px 0 13px}

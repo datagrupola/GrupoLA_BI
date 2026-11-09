@@ -936,13 +936,13 @@ function Daily({ rows, branches, initialBranch }) {
 function CommercialComparison({ comparison, windows, loading, error, mode, onModeChange }) {
   const formatPeriod = (window) => window.start + " a " + window.end;
   const formatValue = (metric, value) => {
-    if (value === null) return "No disponible";
+    if (value === null) return metric.historicalFinancialBlocked ? "No comparable" : "No disponible";
     if (metric.kind === "money") return money(value);
     if (metric.kind === "units") return number(value);
     return formatHundredths(value, metric.kind === "ratio-percent" ? "%" : "");
   };
   const formatChange = (metric) => {
-    if (metric.change === null) return "No disponible";
+    if (metric.change === null) return metric.historicalFinancialBlocked ? "No comparable" : "No disponible";
     const absolute = metric.change < 0n ? -metric.change : metric.change;
     const magnitude = (absolute / 100n).toString() + "." +
       (absolute % 100n).toString().padStart(2, "0");
@@ -986,11 +986,21 @@ function CommercialComparison({ comparison, windows, loading, error, mode, onMod
           <div className="lr10-comparison-coverage">
             <span>Período actual: <b>{formatPeriod(windows.current)}</b>
               {" "}({comparison.current.observedPairs}/{comparison.current.expectedPairs} sucursal-días)
+              <small className="lr19-comparison-source">Ops: {comparison.current.sources.OPS} · AppSheet: {comparison.current.sources.APPSHEET}</small>
             </span>
             <span>Anterior: <b>{formatPeriod(windows.previous)}</b>
               {" "}({comparison.previous.observedPairs}/{comparison.previous.expectedPairs} sucursal-días)
+              <small className="lr19-comparison-source">Ops: {comparison.previous.sources.OPS} · AppSheet: {comparison.previous.sources.APPSHEET}</small>
             </span>
           </div>
+          {comparison.historicalPresent && (
+            <p className="lr19-historical-notice">
+              Comparación histórica AppSheet/Ops: disponibles únicamente los indicadores operativos
+              con cobertura y datos válidos. Venta neta y ticket promedio permanecen no comparables
+              cuando intervienen cortes históricos; el total declarado de AppSheet no sustituye a
+              la venta neta certificada.
+            </p>
+          )}
           {(!comparison.current.complete || !comparison.previous.complete) && (
             <p className="lr10-comparison-warning" role="status">
               Cobertura insuficiente o duplicada en alguno de los períodos. Las variaciones sin evidencia
@@ -1190,7 +1200,7 @@ export default function LaRousseDashboard() {
     [error, setError] = useState(""),
     [loading, setLoading] = useState(true),
     [reload, setReload] = useState(0),
-    [comparisonMode, setComparisonMode] = useState("none"),
+    [comparisonMode, setComparisonMode] = useState("month"),
     [comparisonExtra, setComparisonExtra] = useState(null),
     [comparisonError, setComparisonError] = useState(""),
     [comparisonLoading, setComparisonLoading] = useState(false);
