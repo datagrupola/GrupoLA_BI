@@ -5,6 +5,7 @@ import { reviewCutCounts } from "../lib/larousse-review.mjs";
 import { dailyCommercialMetrics } from "../lib/larousse-daily.mjs";
 import { datesForTimeline, branchDailyMetrics } from "../lib/larousse-branch-series.mjs";
 import { salesParticipation } from "../lib/larousse-visualizations.mjs";
+import { projectedPerformanceTier } from "../lib/larousse-performance.mjs";
 import { comparisonWindows, periodComparison } from "../lib/larousse-comparison.mjs";
 import {
   commercialMetrics,
@@ -973,7 +974,7 @@ function Branches({ data, selected, overall, month, globalCutoff }) {
           : 1,
     );
   return (
-    <section className="lr2-panel">
+    <section className="lr2-panel lr15-branch-performance">
       <h2>Desempeño por sucursal</h2>
       {!overall.complete && <p className="lr3-note">Ranking parcial: hay registros sin venta neta comparable.</p>}
       <div className="lr2-table-scroll">
@@ -994,7 +995,9 @@ function Branches({ data, selected, overall, month, globalCutoff }) {
           </thead>
           <tbody>
             {groups.map((b) => (
-              <tr key={b.id}>
+              <tr key={b.id} className={
+                "lr15-performance-" + (projectedPerformanceTier(b.projection.projectedNet, b.m.target) || "neutral")
+              }>
                 <th>{b.name}</th>
                 <td>
                   {b.m.sales.known

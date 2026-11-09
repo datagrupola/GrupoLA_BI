@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const src = readFileSync(new URL("../components/LaRousseDashboard.js", import.meta.url), "utf8");
+const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
+const { projectedPerformanceTier } = await import("../lib/larousse-performance.mjs");
 
 test("BI-01 shows conversion and pieces/ticket from the audited same-population metrics", () => {
   assert.ok(src.includes('label="Conversión" value={formatHundredths(m.conversion, "%")}'));
@@ -23,4 +25,24 @@ test("BI-02 labels projected close, observed rhythm, global cutoff and keeps his
     assert.ok(src.includes(label), "Missing label: " + label);
   assert.ok(src.includes("<History data={data}"));
   assert.ok(src.includes('version: "2"'));
+});
+
+
+test("desempeño por sucursal colors use projected compliance, not accumulated sales", () => {
+  assert.equal(projectedPerformanceTier(10000n, 10000n), "high");
+  assert.equal(projectedPerformanceTier(11500n, 10000n), "high");
+  assert.equal(projectedPerformanceTier(9999n, 10000n), "medium");
+  assert.equal(projectedPerformanceTier(8000n, 10000n), "medium");
+  assert.equal(projectedPerformanceTier(7999n, 10000n), "low");
+  assert.equal(projectedPerformanceTier(0n, 10000n), "low");
+  assert.equal(projectedPerformanceTier(null, 10000n), null);
+  assert.equal(projectedPerformanceTier(9000n, null), null);
+  assert.equal(projectedPerformanceTier(0n, 0n), null);
+  assert.equal(projectedPerformanceTier(-1n, 10000n), null);
+  assert.match(src, /projectedPerformanceTier\(b\.projection\.projectedNet, b\.m\.target\)/);
+  assert.match(src, /className="lr2-panel lr15-branch-performance"/);
+  assert.match(css, /\.lr15-performance-high > td/);
+  assert.match(css, /\.lr15-performance-medium > td/);
+  assert.match(css, /\.lr15-performance-low > td/);
+  assert.match(css, /\.lr15-performance-neutral > td/);
 });

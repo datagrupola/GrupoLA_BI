@@ -585,3 +585,17 @@ button,input,select { font:inherit; }
 .lr14-combo-scroll g[role="button"]:focus-visible rect{stroke:#2071a6;stroke-width:2}
 @media(max-width:1150px){.lr14-insights-grid{grid-template-columns:1fr}.lr14-pie-layout{grid-template-columns:minmax(170px,.65fr) minmax(0,1fr)}}
 @media(max-width:650px){.lr14-card{padding:14px 10px}.lr14-pie-layout{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr)}.lr14-pie-legend-item{font-size:10px}.lr14-selected-day{gap:7px 11px}}
+
+
+/* Branch ranking: color bands reflect projected close / goal, not accumulated sales. */
+.lr15-branch-performance .lr2-table-scroll tbody tr.lr15-performance-high > th,
+.lr15-branch-performance .lr2-table-scroll tbody tr.lr15-performance-high > td{background:#d1efcf;color:#174b2a}
+.lr15-branch-performance .lr2-table-scroll tbody tr.lr15-performance-medium > th,
+.lr15-branch-performance .lr2-table-scroll tbody tr.lr15-performance-medium > td{background:#fff0b6;color:#5d4615}
+.lr15-branch-performance .lr2-table-scroll tbody tr.lr15-performance-low > th,
+.lr15-branch-performance .lr2-table-scroll tbody tr.lr15-performance-low > td{background:#ffd7c5;color:#743e2d}
+.lr15-branch-performance .lr2-table-scroll tbody tr.lr15-performance-neutral > th,
+.lr15-branch-performance .lr2-table-scroll tbody tr.lr15-performance-neutral > td{background:#f3f5f8}
+.lr15-branch-performance .lr2-table-scroll tbody tr > th:first-child{font-weight:800}
+.lr15-branch-performance .lr2-table-scroll tbody tr > td:nth-child(4){font-weight:800}
+.lr15-branch-performance .lr4-mini-progress strong{color:inherit}
