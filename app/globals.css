@@ -604,15 +604,6 @@ button,input,select { font:inherit; }
 /* Executive layout: performance first, trends second, comparison and QA last. */
 .lr16-performance-group{margin:0 0 14px}
 .lr16-performance-group>.lr2-panel{margin-bottom:10px}
-.lr16-ranking-pie{width:100%;max-width:none;margin:0}
-.lr16-ranking-pie .lr14-card{height:auto;min-height:275px;padding:17px 22px}
-.lr16-ranking-pie .lr14-pie-layout{grid-template-columns:minmax(220px,280px) minmax(0,1fr);gap:clamp(20px,3vw,44px)}
-.lr16-ranking-pie .lr14-pie-legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 12px;align-content:center}
-.lr16-ranking-pie .lr14-pie-legend-item{min-width:0;padding:10px 12px;border:1px solid #e6edf6;border-radius:10px;background:#f7f9fc}
-.lr16-ranking-pie .lr14-pie-legend-item strong{font-size:12px}
-.lr16-ranking-pie .lr14-pie-legend-item small{font-size:11px}
-.lr16-conversion-traffic{margin-top:14px;padding-top:14px;border-top:1px solid #e3eaf2}
-.lr16-conversion-traffic>.lr14-card{height:auto}
 .lr16-comparison-selector{display:flex;flex-direction:column;gap:6px;min-width:208px;max-width:100%;font-size:11px;font-weight:750;color:#6f8095}
 .lr16-comparison-selector select{min-height:40px;padding:8px 11px;border:1px solid #d6e1ef;background:#fff;border-radius:9px;color:#284967;font-size:12px;font-weight:700;cursor:pointer}
 .lr16-comparison-selector select:focus-visible{outline:2px solid #197ab9;outline-offset:2px}
@@ -651,13 +642,6 @@ button,input,select { font:inherit; }
  .lr16-ranking-mobile-extra>div{min-width:0}
  .lr16-ranking-mobile-extra dt{font-size:10px;color:#62768c;margin:0 0 4px}
  .lr16-ranking-mobile-extra dd{font-size:12px;font-weight:750;color:#213e5f;overflow-wrap:anywhere;font-variant-numeric:tabular-nums;margin:0}
- .lr16-ranking-pie{width:100%}
- .lr16-ranking-pie .lr14-card{padding:14px 12px}
- .lr16-ranking-pie .lr14-pie-layout{grid-template-columns:1fr;gap:12px}
- .lr16-ranking-pie .lr14-pie{max-width:190px}
- .lr16-ranking-pie .lr14-pie-legend{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
- .lr16-ranking-pie .lr14-pie-legend-item{padding:8px 9px}
- .lr16-ranking-pie .lr14-pie-legend-item small{font-size:10px}
  .lr16-comparison-selector{width:100%}
  .lr16-data-controls{margin-top:19px}
 }
@@ -669,8 +653,28 @@ button,input,select { font:inherit; }
 .lr2.lr3 > .lr2-panel{margin-bottom:15px}
 .lr2.lr3 .lr16-performance-group > .lr2-panel{margin-bottom:10px}
 @media(min-width:741px) and (max-width:1250px){
- .lr16-ranking-pie .lr14-pie-legend{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:430px){
- .lr16-ranking-pie .lr14-pie-legend{grid-template-columns:1fr}
+}
+
+
+/* BI: sales participation and conversion/footfall share the Daily branch scope. */
+.lr17-daily-paired{display:grid;grid-template-columns:minmax(325px,.93fr) minmax(0,1.57fr);gap:14px;align-items:stretch;margin-top:14px;padding-top:14px;border-top:1px solid #e3eaf2}
+.lr17-daily-paired>.lr14-card{height:100%;min-width:0}
+.lr17-daily-paired>.lr14-card:first-child{display:flex;flex-direction:column}
+.lr17-daily-paired .lr14-pie-layout{flex:1;align-content:center;grid-template-columns:minmax(125px,.95fr) minmax(132px,1.05fr);gap:10px}
+.lr17-daily-paired .lr14-pie-legend-item small{font-size:10px}
+@media(max-width:1150px){
+ .lr17-daily-paired{grid-template-columns:minmax(0,1fr)}
+ .lr17-daily-paired .lr14-pie-layout{grid-template-columns:minmax(180px,250px) minmax(0,1fr);gap:18px}
+ .lr17-daily-paired .lr14-pie-legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+}
+@media(max-width:650px){
+ .lr17-daily-paired{gap:11px}
+ .lr17-daily-paired .lr14-pie-layout{grid-template-columns:minmax(0,1fr);gap:10px}
+ .lr17-daily-paired .lr14-pie{max-width:215px}
+ .lr17-daily-paired .lr14-pie-legend{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:400px){
+ .lr17-daily-paired .lr14-pie-legend{grid-template-columns:minmax(0,1fr)}
 }

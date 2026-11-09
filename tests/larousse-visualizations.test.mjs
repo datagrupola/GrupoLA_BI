@@ -88,7 +88,7 @@ test("combo uses consolidated weighted conversion, with gaps for incomplete days
   assert.equal(days[1].conversion,null);
 });
 
-test("UI keeps pie with global ranking and combo tied to trend selection", () => {
+test("UI keeps pie and combo together under the same Daily month and branch filters", () => {
   const src=readFileSync(new URL("../components/LaRousseDashboard.js",import.meta.url),"utf8");
   const css=readFileSync(new URL("../app/globals.css",import.meta.url),"utf8");
   for(const snippet of [
@@ -96,10 +96,11 @@ test("UI keeps pie with global ranking and combo tied to trend selection", () =>
     "Venta por sucursal", "Conversión y afluencia a piso por fecha",
     'branchDailyMetrics(rows, calendarDates, selectedIds, "consolidated")',
     "setSelectedDate(day.date)", "No disponible",
-  ])assert.ok(src.includes(snippet),snippet);
-  assert.match(src, /<SalesByBranchChart rows=\{m\.commercial\} branches=\{data\.branches\}/);
-  assert.match(src, /selectedIds=\{branch \? \[branch\] : \(data\.targets \|\| \[\]\)/);
-  assert.match(src, /<ConversionFootfallChart[\s\S]*?selectedDate=\{selectedDate\} setSelectedDate=\{setSelectedDate\}/);
-  assert.match(css, /\.lr16-ranking-pie/);
-  assert.match(css, /\.lr16-conversion-traffic/);
+  ]) assert.ok(src.includes(snippet),snippet);
+  const daily=src.slice(src.indexOf("function Daily({"), src.indexOf("function CommercialComparison("));
+  assert.match(daily, /<SalesByBranchChart rows=\{scopedRows\} branches=\{branches\} selectedIds=\{selectedIds\} \/>/);
+  assert.match(daily, /<ConversionFootfallChart[\s\S]*?selectedDate=\{selectedDate\} setSelectedDate=\{setSelectedDate\}/);
+  assert.match(daily, /!!selectedIds\.length &&/);
+  assert.doesNotMatch(src, /<SalesByBranchChart rows=\{m\.commercial\}/);
+  assert.match(css, /\.lr17-daily-paired/);
 });

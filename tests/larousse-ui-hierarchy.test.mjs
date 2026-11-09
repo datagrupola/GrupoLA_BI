@@ -6,14 +6,13 @@ const src=readFileSync(new URL("../components/LaRousseDashboard.js",import.meta.
 const css=readFileSync(new URL("../app/globals.css",import.meta.url),"utf8");
 const shell=src.slice(src.indexOf("export default function LaRousseDashboard()"));
 
-test("executive hierarchy puts ranking and pie above trends and comparison", () => {
+test("executive hierarchy keeps ranking above the Daily module and comparison", () => {
   const kpis=shell.indexOf('<section className="lr4-lead"');
   const ranking=shell.indexOf("<Branches data={data}");
-  const pie=shell.indexOf("<SalesByBranchChart rows={m.commercial}");
   const daily=shell.indexOf("<Daily key={month");
   const compare=shell.indexOf("<CommercialComparison comparison={comparison}");
   const controls=shell.indexOf('<section className="lr16-data-controls"');
-  assert.ok(kpis>=0 && kpis<ranking && ranking<pie && pie<daily &&
+  assert.ok(kpis>=0 && kpis<ranking && ranking<daily &&
     daily<compare && compare<controls);
   assert.match(src,/\.sort\(compareProjectedCompliance\)/);
   assert.match(src,/projectedPerformanceTier\(b\.projection\.projectedNet, b\.m\.target\)/);
@@ -51,24 +50,22 @@ test("controls stay collapsed and trend dates remain synchronized", () => {
 });
 
 
-test("compact layout gives sales distribution the full dashboard width", () => {
- assert.match(css,/\.lr16-ranking-pie\{width:100%;max-width:none;margin:0\}/);
- assert.doesNotMatch(css,/\.lr16-ranking-pie\{width:min\(100%,700px\)/);
- assert.match(css,/\.lr16-ranking-pie \.lr14-pie-layout\{grid-template-columns:minmax\(220px,280px\) minmax\(0,1fr\)/);
- assert.match(css,/\.lr16-ranking-pie \.lr14-pie-legend\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
- assert.match(css,/@media\(max-width:740px\)/);
- assert.match(css,/\.lr16-ranking-pie \.lr14-pie-layout\{grid-template-columns:1fr;gap:12px\}/);
- assert.match(css,/@media\(max-width:430px\)/);
+test("sales participation is inside the Daily module with responsive paired charts", () => {
+ assert.match(src,/<SalesByBranchChart rows=\{scopedRows\} branches=\{branches\} selectedIds=\{selectedIds\} \/>/);
+ assert.doesNotMatch(src,/<SalesByBranchChart rows=\{m\.commercial\}/);
+ assert.match(css,/\.lr17-daily-paired\{display:grid;grid-template-columns:/);
+ assert.match(css,/@media\(max-width:1150px\)/);
+ assert.match(css,/@media\(max-width:650px\)/);
+ assert.doesNotMatch(css,/\.lr16-ranking-pie/);
 });
 
 test("dashboard retains ranking and trend priorities while reducing excess vertical gaps", () => {
  assert.match(css,/\.lr2\.lr3 \.lr4-lead\{gap:11px;margin-bottom:12px\}/);
  assert.match(css,/\.lr2\.lr3 \.lr4-activity\{gap:11px;margin-bottom:15px\}/);
  assert.match(css,/\.lr16-performance-group\{margin:0 0 14px\}/);
- assert.match(css,/\.lr16-conversion-traffic\{margin-top:14px;padding-top:14px/);
+ assert.match(css,/\.lr17-daily-paired\{display:grid/);
  const ranking=shell.indexOf("<Branches data={data}");
- const pie=shell.indexOf("<SalesByBranchChart rows={m.commercial}");
  const daily=shell.indexOf("<Daily key={month");
- assert.ok(ranking>=0&&ranking<pie&&pie<daily);
+ assert.ok(ranking>=0 && ranking<daily);
  assert.match(src,/\.sort\(compareProjectedCompliance\)/);
 });

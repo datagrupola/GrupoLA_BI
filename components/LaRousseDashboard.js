@@ -851,7 +851,8 @@ function Daily({ rows, branches, initialBranch }) {
         </div>
       )}
       {!!selectedIds.length && (
-        <div className="lr16-conversion-traffic">
+        <div className="lr17-daily-paired" aria-label="Participación y tráfico de las sucursales seleccionadas">
+          <SalesByBranchChart rows={scopedRows} branches={branches} selectedIds={selectedIds} />
           <ConversionFootfallChart
             days={branchDailyMetrics(rows, calendarDates, selectedIds, "consolidated")[0]?.days || []}
             selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
@@ -1283,12 +1284,8 @@ export default function LaRousseDashboard() {
               </div>
             )}
             {!!rows.length && (
-              <div className="lr16-performance-group" aria-label="Rendimiento y distribución por sucursal">
+              <div className="lr16-performance-group" aria-label="Desempeño por sucursal">
                 <Branches data={data} selected={branch} overall={m} month={month} globalCutoff={globalCutoff} />
-                <div className="lr16-ranking-pie">
-                  <SalesByBranchChart rows={m.commercial} branches={data.branches}
-                    selectedIds={branch ? [branch] : (data.targets || []).map((target) => target.branch_id)} />
-                </div>
               </div>
             )}
             {commercialMetrics(chartRows, []).commercial.length > 0 && (
