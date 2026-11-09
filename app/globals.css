@@ -475,3 +475,24 @@ button,input,select { font:inherit; }
   .lr10-comparison-table th:first-child { min-width:135px; }
   .lr2-controls label:has(select[aria-label="Comparación temporal global"]) { min-width:170px; }
 }
+
+
+/* BI-04 follow-up: per-branch timeline selection, independent of header scope. */
+.lr11-controls{display:grid;grid-template-columns:minmax(0,2fr) minmax(180px,1fr);gap:12px;margin:14px 0 8px}
+.lr11-controls fieldset{min-width:0;margin:0;padding:12px;border:1px solid #dce6f1;border-radius:12px}
+.lr11-controls legend{padding:0 6px;font-size:12px;font-weight:800;color:#2f5277}
+.lr11-branch-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.lr11-branch-actions input{flex:1 1 135px;min-width:110px;max-width:250px;padding:8px 10px;border:1px solid #d7e2ee;border-radius:8px}
+.lr11-branch-actions button,.lr11-mode-buttons button{padding:8px 10px;border:1px solid #d7e2ee;border-radius:8px;background:#fff;color:#325675;font-size:12px;font-weight:700;cursor:pointer}
+.lr11-branch-options{display:flex;gap:6px 9px;flex-wrap:wrap;align-items:center}
+.lr11-branch-options label{display:inline-flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid #e1e8f1;border-radius:9px;background:#f8fafc;color:#385570;font-size:12px;cursor:pointer}
+.lr11-branch-options input{accent-color:#246bad}
+.lr11-mode-buttons{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:7px}
+.lr11-mode-buttons button[aria-pressed="true"]{background:#215e96;color:#fff;border-color:#215e96}
+.lr11-controls button:focus-visible,.lr11-controls input:focus-visible{outline:2px solid #197ab9;outline-offset:2px}
+.lr11-series-meta{margin:0 0 12px;color:#70839a;font-size:12px}
+.lr11-series-legend{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.lr11-legend-item{display:flex;align-items:center;gap:7px;padding:7px 9px;border:1px solid #e2eaf2;border-radius:9px;background:#f7f9fc;color:#385371}
+.lr11-legend-item strong{color:#173d64;font-variant-numeric:tabular-nums}
+.lr11-color{display:inline-block;flex:none;width:10px;height:10px;border-radius:50%}
+@media(max-width:700px){.lr11-controls{grid-template-columns:1fr}.lr11-branch-actions input{max-width:none}.lr11-legend-item{width:100%;justify-content:flex-start}.lr11-legend-item strong{margin-left:auto}}
