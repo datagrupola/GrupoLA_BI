@@ -663,23 +663,6 @@ function ConversionFootfallChart({ days, selectedDate, setSelectedDate }) {
   );
 }
 
-function CommercialVisualizations({ rows, dates, branches, selectedIds, selectedDate, setSelectedDate }) {
-  if (!selectedIds.length) return null;
-  const comboDays = branchDailyMetrics(rows, dates, selectedIds, "consolidated")[0]?.days || [];
-  return (
-    <section className="lr14-insights" aria-label="Distribución de ventas y tráfico en tiendas">
-      <div className="lr14-insights-heading">
-        <h3>Distribución y tráfico</h3>
-      </div>
-      <div className="lr14-insights-grid">
-        <SalesByBranchChart rows={rows} branches={branches} selectedIds={selectedIds} />
-        <ConversionFootfallChart days={comboDays}
-          selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
-      </div>
-    </section>
-  );
-}
-
 function Daily({ rows, branches, initialBranch }) {
   const [selectedDate, setSelectedDate] = useState(null);
   const [mainIndicator, setMainIndicator] = useState("net");
@@ -825,8 +808,9 @@ function Daily({ rows, branches, initialBranch }) {
             onClick={() => setBranchMode("comparison")}>Comparativo</button>
         </div>
       </div>
-      <p className="lr12-selection-summary">{selectedSummary} · {branchMode === "comparison" ? "Comparativo" : "Consolidado"}.
-        <span className="lr12-scope-hint"> Solo aplica a estas gráficas.</span>
+      <p className="lr12-selection-summary">
+        Gráficas: {selectedSummary} · {branchMode === "comparison" ? "Comparativo" : "Consolidado"}
+        <span className="lr12-scope-hint"> · Selección independiente del filtro superior</span>
       </p>
       {!selectedIds.length ? (
         <p className="lr2-empty">Selecciona al menos una sucursal para mostrar las series.</p>
@@ -866,19 +850,18 @@ function Daily({ rows, branches, initialBranch }) {
           </button>
         </div>
       )}
-      <CommercialVisualizations rows={rows} dates={calendarDates} branches={branches}
-        selectedIds={selectedIds} selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+      {!!selectedIds.length && (
+        <div className="lr16-conversion-traffic">
+          <ConversionFootfallChart
+            days={branchDailyMetrics(rows, calendarDates, selectedIds, "consolidated")[0]?.days || []}
+            selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+        </div>
+      )}
     </section>
   );
 }
 
-function CommercialComparison({ comparison, windows, loading, error }) {
-  if (!windows) return (
-    <section className="lr2-panel lr10-comparison">
-      <h2>Comparativo comercial</h2>
-      <p className="lr6-gap-note">Sin fecha de corte global verificable para realizar la comparación.</p>
-    </section>
-  );
+function CommercialComparison({ comparison, windows, loading, error, mode, onModeChange }) {
   const formatPeriod = (window) => window.start + " a " + window.end;
   const formatValue = (metric, value) => {
     if (value === null) return "No disponible";
@@ -901,12 +884,26 @@ function CommercialComparison({ comparison, windows, loading, error }) {
       <div className="lr10-comparison-title">
         <div>
           <h2>Comparativo comercial</h2>
-          <p>{windows.mode === "week" ? "Últimos 7 días vs. 7 días previos" :
-            "Mes a la fecha vs. mismos días del mes anterior"}</p>
+          {mode !== "none" && windows && (
+            <p>{windows.mode === "week" ? "Últimos 7 días vs. 7 días previos" :
+              "Mes a la fecha vs. mismos días del mes anterior"}</p>
+          )}
         </div>
-        <small>La parte superior conserva los indicadores del mes seleccionado.</small>
+        <label className="lr16-comparison-selector">
+          <span>Comparar con</span>
+          <select aria-label="Comparación temporal global" value={mode}
+            onChange={(event) => onModeChange(event.target.value)}>
+            <option value="none">Sin comparación</option>
+            <option value="week">7 días anteriores</option>
+            <option value="month">Mes anterior (mismos días)</option>
+          </select>
+        </label>
       </div>
-      {loading ? (
+      {mode === "none" ? (
+        <p className="lr10-comparison-status">Selecciona un período para comparar.</p>
+      ) : !windows ? (
+        <p className="lr6-gap-note">Sin fecha de corte global verificable para realizar la comparación.</p>
+      ) : loading ? (
         <p role="status" className="lr10-comparison-status">Consultando período anterior…</p>
       ) : error ? (
         <p role="status" className="lr10-comparison-status">{error}</p>
@@ -971,7 +968,7 @@ function Branches({ data, selected, overall, month, globalCutoff }) {
     <section className="lr2-panel lr15-branch-performance">
       <h2>Desempeño por sucursal</h2>
       {!overall.complete && <p className="lr3-note">Ranking parcial: hay registros sin venta neta comparable.</p>}
-      <div className="lr2-table-scroll">
+      <div className="lr2-table-scroll lr16-ranking-desktop">
         <table>
           <thead>
             <tr>
@@ -1024,6 +1021,32 @@ function Branches({ data, selected, overall, month, globalCutoff }) {
           </tbody>
         </table>
       </div>
+        <div className="lr16-ranking-mobile" aria-label="Ranking de sucursales en móvil">
+          {groups.map((b) => (
+            <details key={b.id} className={
+              "lr16-ranking-mobile-item lr15-performance-" +
+              (projectedPerformanceTier(b.projection.projectedNet, b.m.target) || "neutral")
+            }>
+              <summary>
+                <span className="lr16-ranking-mobile-name">{b.name}</span>
+                <span className="lr16-ranking-mobile-key">
+                  <strong>{percent(b.projection.projectedNet, b.m.target)}</strong>
+                  <small>Proyección: {money(b.projection.projectedNet)}</small>
+                  <small>Meta: {money(b.m.target)}</small>
+                </span>
+                <span className="lr16-ranking-mobile-arrow" aria-hidden="true">⌄</span>
+              </summary>
+              <dl className="lr16-ranking-mobile-extra">
+                <div><dt>Venta neta</dt><dd>{b.m.sales.known ? money(b.m.sales.knownNet) : "No disponible"}</dd></div>
+                <div><dt>Avance actual</dt><dd>{percent(b.m.fullNet, b.m.target)}</dd></div>
+                <div><dt>Faltante</dt><dd>{money(b.m.remaining)}</dd></div>
+                <div><dt>Participación</dt><dd>{percent(overall.complete ? b.m.fullNet : null, overall.fullNet)}</dd></div>
+                <div><dt>Cobertura</dt><dd>{b.m.sales.known}/{b.count}</dd></div>
+                <div><dt>Tickets</dt><dd>{number(b.m.tickets.value)}</dd></div>
+              </dl>
+            </details>
+          ))}
+        </div>
     </section>
   );
 }
@@ -1219,15 +1242,6 @@ export default function LaRousseDashboard() {
               ))}
             </select>
           </label>
-          <label>
-            <span>Comparar con</span>
-            <select aria-label="Comparación temporal global" value={comparisonMode}
-              onChange={(e) => setComparisonMode(e.target.value)}>
-              <option value="none">Sin comparación</option>
-              <option value="week">7 días anteriores</option>
-              <option value="month">Mes anterior (mismos días)</option>
-            </select>
-          </label>
           <button onClick={() => setReload((x) => x + 1)}>Actualizar</button>
         </div>
       </header>
@@ -1263,27 +1277,35 @@ export default function LaRousseDashboard() {
               <Card label="Piezas por ticket" value={formatHundredths(m.piecesPerTicket)}
                 note={m.piecesPerTicket === null ? "Datos incompletos o tickets cero" : null} />
             </section>
-            {comparisonMode !== "none" && (
-              <CommercialComparison comparison={comparison} windows={windows}
-                loading={comparisonLoading || !currentComparison && !comparisonError && !!windows}
-                error={comparisonError} />
-            )}
             {!rows.length && (
               <div role="status" className="lr2-empty">
                 Sin cortes para el período y sucursal seleccionados.
+              </div>
+            )}
+            {!!rows.length && (
+              <div className="lr16-performance-group" aria-label="Rendimiento y distribución por sucursal">
+                <Branches data={data} selected={branch} overall={m} month={month} globalCutoff={globalCutoff} />
+                <div className="lr16-ranking-pie">
+                  <SalesByBranchChart rows={m.commercial} branches={data.branches}
+                    selectedIds={branch ? [branch] : (data.targets || []).map((target) => target.branch_id)} />
+                </div>
               </div>
             )}
             {commercialMetrics(chartRows, []).commercial.length > 0 && (
               <Daily key={month + ":" + branch} rows={commercialMetrics(chartRows, []).commercial}
                 branches={catalog} initialBranch={branch} />
             )}
-            {!!rows.length && (
-              <>
-                <Branches data={data} selected={branch} overall={m} month={month} globalCutoff={globalCutoff} />
-                <History data={data} selected={branch} rows={m.historical} />
-              </>
-            )}
-            <CutReview rows={m.commercial} confirmed={m.confirmed} />
+            <CommercialComparison comparison={comparison} windows={windows}
+              loading={comparisonLoading || !currentComparison && !comparisonError && !!windows}
+              error={comparisonError} mode={comparisonMode} onModeChange={setComparisonMode} />
+            <section className="lr16-data-controls" aria-label="Control y trazabilidad de datos">
+              <h2>Control de datos</h2>
+              <details className="lr16-review-details">
+                <summary>Revisión de cortes · {reviewCutCounts(m.commercial).total} cortes</summary>
+                <CutReview rows={m.commercial} confirmed={m.confirmed} />
+              </details>
+              <History data={data} selected={branch} rows={m.historical} />
+            </section>
           </>
         )
       )}

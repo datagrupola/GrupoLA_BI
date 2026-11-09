@@ -88,19 +88,18 @@ test("combo uses consolidated weighted conversion, with gaps for incomplete days
   assert.equal(days[1].conversion,null);
 });
 
-test("UI renders native pie and dual-axis charts under existing branch selection", () => {
+test("UI keeps pie with global ranking and combo tied to trend selection", () => {
   const src=readFileSync(new URL("../components/LaRousseDashboard.js",import.meta.url),"utf8");
   const css=readFileSync(new URL("../app/globals.css",import.meta.url),"utf8");
   for(const snippet of [
     "function SalesByBranchChart(", "function ConversionFootfallChart(",
-    "function CommercialVisualizations(", "Venta por sucursal",
-    "Conversión y afluencia a piso por fecha", "selectedIds={selectedIds}",
-    'branchDailyMetrics(rows, dates, selectedIds, "consolidated")',
+    "Venta por sucursal", "Conversión y afluencia a piso por fecha",
+    'branchDailyMetrics(rows, calendarDates, selectedIds, "consolidated")',
     "setSelectedDate(day.date)", "No disponible",
   ])assert.ok(src.includes(snippet),snippet);
-  assert.match(src, /<CommercialVisualizations rows=\{rows\} dates=\{calendarDates\}/);
-  assert.match(css, /\.lr14-insights-grid/);
-  assert.match(css, /\.lr14-insights-grid\{[^}]*align-items:stretch/);
-  assert.match(css, /\.lr14-card\{[^}]*height:100%/);
-  assert.match(css, /\.lr14-insights-grid>\.lr14-card:first-child \.lr14-pie-layout\{flex:1;align-content:center\}/);
+  assert.match(src, /<SalesByBranchChart rows=\{m\.commercial\} branches=\{data\.branches\}/);
+  assert.match(src, /selectedIds=\{branch \? \[branch\] : \(data\.targets \|\| \[\]\)/);
+  assert.match(src, /<ConversionFootfallChart[\s\S]*?selectedDate=\{selectedDate\} setSelectedDate=\{setSelectedDate\}/);
+  assert.match(css, /\.lr16-ranking-pie/);
+  assert.match(css, /\.lr16-conversion-traffic/);
 });
