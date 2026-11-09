@@ -490,14 +490,13 @@ function SalesByBranchChart({ rows, branches, selectedIds }) {
   return (
     <article className="lr14-card" aria-label="Participación de venta por sucursal">
       <h3>Venta por sucursal</h3>
-      <p className="lr14-subtitle">Participación en la venta neta registrada · {result.knownBranches}/{result.selectedBranches} sucursales con datos válidos</p>
       {!result.chartable ? (
         <p className="lr2-empty">No hay ventas netas verificables para calcular porcentajes.</p>
       ) : (
         <>
           <div className="lr14-pie-layout">
             <svg viewBox="0 0 230 230" className="lr14-pie"
-              role="img" aria-label={"Distribución porcentual de ventas registradas entre " + result.knownBranches + " sucursales"}>
+              role="img" aria-label="Gráfica circular de venta por sucursal">
               <title>Participación de ventas registradas por sucursal</title>
               {wedges.length === 1 ? (
                 <circle cx="115" cy="115" r="103" fill={wedges[0].color}>
@@ -583,7 +582,6 @@ function ConversionFootfallChart({ days, selectedDate, setSelectedDate }) {
   return (
     <article className="lr14-card" aria-label="Conversión y afluencia a piso por fecha">
       <h3>Conversión y afluencia a piso por fecha</h3>
-      <p className="lr14-subtitle">Consolidado de las sucursales seleccionadas · ejes independientes</p>
       {!days.length ? (
         <p className="lr2-empty">No hay fechas comerciales verificables.</p>
       ) : (
@@ -678,7 +676,6 @@ function CommercialVisualizations({ rows, dates, branches, selectedIds, selected
     <section className="lr14-insights" aria-label="Distribución de ventas y tráfico en tiendas">
       <div className="lr14-insights-heading">
         <h3>Distribución y tráfico</h3>
-        <p>Ventas por sucursal y relación entre conversión y afluencia.</p>
       </div>
       <div className="lr14-insights-grid">
         <SalesByBranchChart rows={rows} branches={branches} selectedIds={selectedIds} />
