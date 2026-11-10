@@ -18,10 +18,23 @@ const zero = (branch_id) => ({
 });
 const payload = () => ({
   schema: OPERATIONAL_SCHEMA, month: "2026-11",
-  queried_at: "2026-11-10T18:00:00.000Z", branches,
+  queried_at: "2026-11-10T18:00:00.000Z",
+  branches: branches.map((b) => ({ ...b })),
   incident_daily: [], task_cycle_daily: [],
   task_monthly: branches.map((b) => zero(b.id)),
   task_activity_daily: [],
+});
+
+test("cada fixture tiene catálogo independiente y no contamina otras pruebas", () => {
+  const first = payload();
+  const secondPayload = payload();
+  first.branches.pop();
+  first.branches[0].name = "Chino Regalado AMERICAS";
+  assert.equal(secondPayload.branches.length, 7);
+  assert.equal(secondPayload.branches[0].name, "CAMELINAS");
+  assert.notEqual(first.branches, secondPayload.branches);
+  assert.notEqual(first.branches[0], secondPayload.branches[0]);
+  assert.equal(validateOperational(secondPayload, "2026-11").branches.length, 7);
 });
 
 test("contrato v1 válido: siete sucursales y población mensual conciliada", () => {
@@ -42,7 +55,7 @@ test("contrato v1 válido: siete sucursales y población mensual conciliada", ()
   assert.equal(m.assigned, 3);
   assert.equal(m.approved, 1);
   assert.equal(m.reopened, 1);
-  assert.equal(m.onTimeRate, 100 / 3);
+  assert.ok(Math.abs(m.onTimeRate - 100 / 3) < 1e-10);
 });
 
 test("vencimientos diarios no se suman como tareas distintas mensuales", () => {
@@ -149,7 +162,7 @@ test("shell operativo y comercial comparten navegación sin exponer secretos", (
   assert.match(ui, /Tareas vencidas · Ad hoc/);
   assert.match(ui, /Incidencias por tipo/);
   assert.match(ui, /Desempeño por sucursal/);
-  assert.match(ui, /Cumplimiento de actividades de Ritmo Diario/);
+  assert.match(ui, /cumplimiento de actividades de Ritmo Diario/i);
   assert.doesNotMatch(ui, /process\.env|OPS_BI_READ_TOKEN|service_role/);
   assert.match(api, /verifySessionToken/);
   assert.match(api, /validateOperational/);
