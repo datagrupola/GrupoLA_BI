@@ -9,11 +9,15 @@ const login = read("app/login/page.js");
 const styles = read("app/globals.css");
 const dashboard = read("components/LaRousseDashboard.js");
 
-test("portal opens exactly one official La Rousse commercial dashboard", () => {
+test("portal provides two official La Rousse dashboards without reintroducing legacy business views", () => {
   assert.match(shell, /<LaRousseDashboard\s*\/>/);
   assert.equal(shell.match(/<LaRousseDashboard\s*\/>/g)?.length, 1);
+  assert.match(shell, /<LaRousseOperationalDashboard\s*\/>/);
+  assert.equal(shell.match(/<LaRousseOperationalDashboard\s*\/>/g)?.length, 1);
+  assert.match(shell, /setView\("operational"\)/);
+  assert.match(shell, /setView\("commercial"\)/);
+  assert.match(shell, /mainId = isCommercial \? "dashboard-comercial" : "dashboard-operativo"/);
   assert.doesNotMatch(shell, /PacasDashboard|<iframe|activeView|views\s*=|setActiveView/);
-  assert.match(shell, /<main id="dashboard-comercial"/);
 });
 
 test("retired business views and obsolete Looker links are absent from the visible portal", () => {
