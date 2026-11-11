@@ -21,7 +21,7 @@ test("BI-02 queries the unfiltered month to preserve the GLOBAL cutoff with a se
 });
 
 test("BI-02 labels projected close, observed rhythm, global cutoff and keeps history separate", () => {
-  for (const label of ["Proyección de cierre", "Ritmo diario de venta", "Corte global"])
+  for (const label of ["Proyección de ingresos", "Ritmo diario de ingresos", "Corte global"])
     assert.ok(src.includes(label), "Missing label: " + label);
   assert.ok(src.includes("<History data={data}"));
   assert.ok(src.includes('version: "2"'));
