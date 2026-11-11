@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { commercialMetrics } from "../lib/larousse-commercial.mjs";
 
 const src = readFileSync(new URL("../components/LaRousseDashboard.js", import.meta.url), "utf8");
 const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
@@ -10,6 +11,21 @@ test("BI-01 shows conversion and pieces/ticket from the audited same-population 
   assert.ok(src.includes('label="Conversión" value={formatHundredths(m.conversion, "%")}'));
   assert.ok(src.includes('label="Piezas por ticket" value={formatHundredths(m.piecesPerTicket)}'));
   assert.ok(src.includes("commercialMetrics(rows, data?.targets || [])"));
+});
+
+test("BI muestra Ventas declaradas e Ingresos netos por separado sin alterar las operaciones", () => {
+  const row = {
+    branch_id: "sucursal-ficticia", state: "APPROVED", source_kind: "OPS", historical: false,
+    net_sales: "100.00", declared_total: "115.50", cut_expenses: "0.00",
+    tickets: "1", footfall: "2", pieces: "1",
+  };
+  const metrics = commercialMetrics([row], [{ branch_id: "sucursal-ficticia", amount: "200.00" }]);
+  assert.equal(metrics.sales.net, 10000n);
+  assert.equal(metrics.sales.declared, 11550n);
+  assert.match(src, /<Card hero label="Ventas"/);
+  assert.match(src, /money\(m\.sales\.declared\)/);
+  assert.match(src, /<Card label="Ingresos"/);
+  assert.match(src, /money\(m\.sales\.knownNet\)/);
 });
 
 test("BI-02 queries the unfiltered month to preserve the GLOBAL cutoff with a selected branch", () => {

@@ -1334,7 +1334,10 @@ export default function LaRousseDashboard() {
           <>
             {rows.length > 0 && !m.complete && <p className="lr4-coverage">Cobertura de ingresos incompleta: no se calcula el avance hasta tener datos comparables de todas las sucursales.</p>}
             <section className="lr4-lead" aria-label="Indicadores principales">
-              <Card hero label="Ingresos"
+              <Card hero label="Ventas"
+                value={m.sales.count > 0 && m.sales.declared !== null ? money(m.sales.declared) : "No disponible"}
+                note={!m.complete && rows.length ? "Subtotal disponible · excluye históricos" : null} />
+              <Card label="Ingresos"
                 value={m.sales.known ? money(m.sales.knownNet) : "No disponible"}
                 note={!m.complete && rows.length ? "Subtotal disponible · excluye históricos" : null} />
               <Card label="Meta mensual de ingresos" value={money(m.target)}
@@ -1412,7 +1415,7 @@ const styles = `.lr3-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1
 .lr6-scroll{padding:5px 0 3px}
 }
 
-.lr7 .lr4-lead{grid-template-columns:repeat(4,minmax(0,1fr))}
+.lr7 .lr4-lead{grid-template-columns:repeat(5,minmax(0,1fr))}
 .lr7 .lr4-activity{grid-template-columns:repeat(3,minmax(0,1fr))}
 .lr7-forecast{display:flex;flex-direction:column;gap:11px;justify-content:space-between;min-width:0;background:#fff;border:1px solid #e3e9f2;border-radius:16px;padding:20px 21px;box-shadow:0 5px 24px rgba(18,45,78,.035)}
 .lr7-forecast-value{font-size:clamp(21px,2.1vw,30px);font-weight:800;letter-spacing:-.045em;line-height:1.2;color:#1d395b;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
