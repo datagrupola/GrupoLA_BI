@@ -80,7 +80,9 @@ test("vencimientos diarios no se suman como tareas distintas mensuales", () => {
 
 test("fallo cerrado por cobertura, duplicados, métricas inválidas o Chino Regalado", () => {
   const p = payload();
-  p.branches.pop();
+  const removedId = branches.find((b) => b.name === "PONIENTE").id;
+  p.branches = p.branches.filter((b) => b.id !== removedId);
+  p.task_monthly = p.task_monthly.filter((row) => row.branch_id !== removedId);
   assert.throws(() => validateOperational(p, "2026-11"), /CATALOG/);
 
   const q = payload();
