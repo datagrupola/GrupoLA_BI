@@ -30,14 +30,14 @@ test("cada fixture tiene catálogo independiente y no contamina otras pruebas", 
   const secondPayload = payload();
   first.branches.pop();
   first.branches[0].name = "Chino Regalado AMERICAS";
-  assert.equal(secondPayload.branches.length, 7);
+  assert.equal(secondPayload.branches.length, 8);
   assert.equal(secondPayload.branches[0].name, "CAMELINAS");
   assert.notEqual(first.branches, secondPayload.branches);
   assert.notEqual(first.branches[0], secondPayload.branches[0]);
-  assert.equal(validateOperational(secondPayload, "2026-11").branches.length, 7);
+  assert.equal(validateOperational(secondPayload, "2026-11").branches.length, 8);
 });
 
-test("contrato v1 válido: siete sucursales y población mensual conciliada", () => {
+test("contrato v1 válido: ocho sucursales y población mensual conciliada", () => {
   const p = payload();
   p.incident_daily.push({ branch_id: id, date: "2026-11-02", type: "APERTURA_TARDIA", count: 2 });
   p.task_cycle_daily.push({
@@ -56,6 +56,18 @@ test("contrato v1 válido: siete sucursales y población mensual conciliada", ()
   assert.equal(m.approved, 1);
   assert.equal(m.reopened, 1);
   assert.ok(Math.abs(m.onTimeRate - 100 / 3) < 1e-10);
+});
+
+test("transición compatible: catálogo exacto de siete sin BBVA y rechazo de siete incompletas", () => {
+  const legacy = payload();
+  const bbva = branches.find((b) => b.name === "BBVA");
+  legacy.branches = legacy.branches.filter((b) => b.id !== bbva.id);
+  legacy.task_monthly = legacy.task_monthly.filter((b) => b.branch_id !== bbva.id);
+  assert.equal(validateOperational(legacy, "2026-11").branches.length, 7);
+  const incomplete = payload();
+  incomplete.branches = incomplete.branches.filter((b) => b.name !== "PONIENTE");
+  incomplete.task_monthly = incomplete.task_monthly.filter((b) => b.branch_id !== branches.find((b) => b.name === "PONIENTE").id);
+  assert.throws(() => validateOperational(incomplete, "2026-11"), /INVALID_OPERATIONAL_CATALOG/);
 });
 
 test("vencimientos diarios no se suman como tareas distintas mensuales", () => {
@@ -98,7 +110,7 @@ test("fallo cerrado por cobertura, duplicados, métricas inválidas o Chino Rega
   assert.equal(operationalMetrics(v).onTimeRate, null);
 });
 
-test("filtro de una sucursal exige solo su cobertura, no las otras seis", () => {
+test("filtro de una sucursal exige solo su cobertura, no el resto del catálogo", () => {
   const p = payload();
   p.branches = [branches[0]];
   p.task_monthly = [zero(id)];

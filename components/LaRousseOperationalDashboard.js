@@ -194,7 +194,7 @@ export default function LaRousseOperationalDashboard() {
     const within = (row) => !branch || row.branch_id === branch;
     return {
       ...data,
-      branches: data.branches.filter(within),
+      branches: data.branches.filter((b) => !branch || b.id === branch),
       incident_daily: data.incident_daily.filter(within),
       task_cycle_daily: data.task_cycle_daily.filter(within),
       task_monthly: data.task_monthly.filter(within),
