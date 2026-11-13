@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { operationalMetrics } from "../lib/larousse-operational.mjs";
+import { operationalMetrics, scopeOperational } from "../lib/larousse-operational.mjs";
 
 const INCIDENT_NAMES = {
   APERTURA_TARDIA: "Apertura tardía",
@@ -189,18 +189,8 @@ export default function LaRousseOperationalDashboard() {
     return () => controller.abort();
   }, [month, reload]);
 
-  const scoped = useMemo(() => {
-    if (!data) return null;
-    const within = (row) => !branch || row.branch_id === branch;
-    return {
-      ...data,
-      branches: data.branches.filter(within),
-      incident_daily: data.incident_daily.filter(within),
-      task_cycle_daily: data.task_cycle_daily.filter(within),
-      task_monthly: data.task_monthly.filter(within),
-      task_activity_daily: data.task_activity_daily.filter(within),
-    };
-  }, [data, branch]);
+  const scoped = useMemo(() => scopeOperational(data, branch), [data, branch]);
+
   const metrics = scoped ? operationalMetrics(scoped) : null;
   const dates = monthDates(month);
   const focus = hoveredDate && dates.includes(hoveredDate) ? hoveredDate : dates.at(-1);

@@ -4,12 +4,15 @@ import { readFileSync } from "node:fs";
 
 import {
   OPERATIONAL_SCHEMA, LAROUSSE_BRANCH_NAMES,
-  validateOperational, operationalMetrics,
+  validateOperational, operationalMetrics, scopeOperational,
 } from "../lib/larousse-operational.mjs";
 import { createSessionToken } from "../lib/auth.js";
 
-const branches = LAROUSSE_BRANCH_NAMES.map((name, i) => ({
-  name, id: `00000000-0000-4000-8000-${String(i + 1).padStart(12, "0")}`,
+// Independent expected catalog: changing the production allowlist cannot change this oracle.
+const expectedNames = ["BBVA", "CAMELINAS", "CENTRO", "DEL_RIO", "GRAN_P_LEON", "LAZARO", "PEPSI", "PONIENTE"];
+const bbva = "137ca756-6535-40f6-867d-b1df46c3f52f";
+const branches = expectedNames.map((name, i) => ({
+  name, id: name === "BBVA" ? bbva : `00000000-0000-4000-8000-${String(i + 1).padStart(12, "0")}`,
 }));
 const [id, second] = branches.map((b) => b.id);
 const zero = (branch_id) => ({
@@ -30,14 +33,23 @@ test("cada fixture tiene catálogo independiente y no contamina otras pruebas", 
   const secondPayload = payload();
   first.branches.pop();
   first.branches[0].name = "Chino Regalado AMERICAS";
-  assert.equal(secondPayload.branches.length, 7);
-  assert.equal(secondPayload.branches[0].name, "CAMELINAS");
+  assert.equal(secondPayload.branches.length, LAROUSSE_BRANCH_NAMES.length);
+  assert.equal(secondPayload.branches[0].name, "BBVA");
   assert.notEqual(first.branches, secondPayload.branches);
   assert.notEqual(first.branches[0], secondPayload.branches[0]);
-  assert.equal(validateOperational(secondPayload, "2026-11").branches.length, 7);
+  assert.equal(validateOperational(secondPayload, "2026-11").branches.length, LAROUSSE_BRANCH_NAMES.length);
 });
 
-test("contrato v1 válido: siete sucursales y población mensual conciliada", () => {
+test("transición segura: acepta el catálogo original de siete sin BBVA", () => {
+  const p = payload();
+  p.branches = p.branches.filter((b) => b.name !== "BBVA");
+  p.task_monthly = p.task_monthly.filter((b) => b.branch_id !== branches[0].id);
+  assert.equal(validateOperational(p, "2026-11").branches.length, 7);
+  p.branches[0].name = "BBVA";
+  assert.throws(() => validateOperational(p, "2026-11"), /CATALOG/);
+});
+
+test("contrato v1 válido: ocho sucursales y población mensual conciliada", () => {
   const p = payload();
   p.incident_daily.push({ branch_id: id, date: "2026-11-02", type: "APERTURA_TARDIA", count: 2 });
   p.task_cycle_daily.push({
@@ -166,4 +178,33 @@ test("shell operativo y comercial comparten navegación sin exponer secretos", (
   assert.doesNotMatch(ui, /process\.env|OPS_BI_READ_TOKEN|service_role/);
   assert.match(api, /verifySessionToken/);
   assert.match(api, /validateOperational/);
+});
+
+
+test("BBVA exact UUID and all seven original branch identities survive transition", () => {
+  assert.deepEqual([...LAROUSSE_BRANCH_NAMES].sort(), [...expectedNames].sort());
+  for (const b of branches) {
+    const p = payload();
+    p.branches = [{ ...b }]; p.task_monthly = [zero(b.id)];
+    assert.equal(validateOperational(p, "2026-11", b.id).branches[0].name, b.name);
+  }
+  for (const name of expectedNames.filter(x => x !== "BBVA")) {
+    const p = payload(); p.branches = p.branches.filter(b => b.name !== name);
+    p.task_monthly = p.task_monthly.filter(r => p.branches.some(b => b.id === r.branch_id));
+    assert.throws(() => validateOperational(p, "2026-11"), /CATALOG/);
+  }
+  for (const mutate of [
+    p => { p.branches[0].id = branches[1].id; },
+    p => { p.branches[0].id = "ffffffff-ffff-4fff-8fff-ffffffffffff"; },
+    p => { p.branches[1].name = "BBVA"; },
+    p => { p.branches.push({ name: "AMERICAS", id: "ffffffff-ffff-4fff-8fff-ffffffffffff" }); },
+  ]) { const p = payload(); mutate(p); assert.throws(() => validateOperational(p, "2026-11"), /CATALOG/); }
+});
+
+
+test("UI scope keeps BBVA and each original branch in the ranking catalog, with only its facts", () => {
+ const p=payload();
+ p.incident_daily=branches.map(b=>({branch_id:b.id,date:"2026-11-12",type:"APERTURA_TARDIA",count:b.id===bbva?2:1}));
+ for(const b of branches){const scoped=scopeOperational(p,b.id);assert.deepEqual(scoped.branches,[b]);assert.deepEqual(scoped.incident_daily,p.incident_daily.filter(r=>r.branch_id===b.id));assert.equal(scoped.task_monthly.length,1);assert.equal(operationalMetrics(scoped).incidents,b.id===bbva?2:1);}
+ assert.deepEqual(scopeOperational(p),p);assert.equal(scopeOperational(null,bbva),null);
 });
