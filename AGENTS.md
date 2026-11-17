@@ -16,7 +16,7 @@ Estas reglas rigen el desarrollo del dashboard BI de Grupo LA en `datagrupola/Gr
 ## Costos y compilaciones de documentación
 
 - El 17-nov-2026 el conector Vercel aceptó configurar **Ignored Build Step** para omitir builds cuando todos los cambios se limiten a `docs/**`, `AGENTS.md`, `.agents/**` o `.codex/**`; las modificaciones fuera de esas rutas deben permitir build.
-- La configuración está en Vercel, no en este archivo. Comparar con el SHA anterior o, si falta, con el merge-base de `main`. Ante error en la comparación se debe permitir build (fail-open).
+- La configuración está en Vercel, no en este archivo. El comando utiliza `VERCEL_GIT_PREVIOUS_SHA` cuando está disponible o, en su ausencia, `HEAD^` como referencia local; no calcula el merge-base de `main`. Si el commit de referencia falta o la comparación falla, permite el build (fail-open).
 - **No asumir ahorro sin comprobar el evento real.** Verificar el efecto de GitHub/Vercel y obtener autorización explícita antes de activar consumos adicionales. No cambiar configuraciones externas en un PR documental sin autorización independiente.
 
 ## Auditoría de este protocolo
