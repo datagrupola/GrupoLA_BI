@@ -297,7 +297,7 @@ button,input,select { font:inherit; }
 .lr8-goal-details .lr4-track { height:9px; }
 .lr8-goal-details small { color:#64748b; font-size:12px; line-height:1.5; }
 .lr8-goal-details small strong { color:#203858; font-weight:800; }
-.lr8-forecast-support { align-self:end; min-width:0; display:grid; gap:5px; }
+.lr8-forecast-support { align-self:stretch; width:100%; min-width:0; display:grid; gap:6px; }
 .lr8 .lr7-forecast-details { display:grid; gap:4px; border-top:1px solid #ebf0f6; padding-top:5px; }
 .lr8 .lr7-forecast-details > div { display:flex; justify-content:space-between; gap:4px 10px; align-items:baseline; flex-wrap:wrap; }
 .lr8 .lr7-forecast-details b { overflow-wrap:anywhere; }
