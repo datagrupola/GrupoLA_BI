@@ -778,3 +778,8 @@ button,input,select { font:inherit; }
 .lr11-legend-item:has(.lr19-coverage){flex-wrap:wrap}
 .lr11-legend-item .lr19-coverage{flex-basis:100%}
 .lr14-selected-day>div{flex-basis:100%;min-width:0}
+
+/* Short daily status, with detailed diagnostics retained in the title/table. */
+.lr20-summary{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 18px}
+.lr20-summary-item{display:inline-flex;align-items:baseline;gap:4px}
+.lr20-summary-item strong{color:#193b63;font-weight:750;font-variant-numeric:tabular-nums}

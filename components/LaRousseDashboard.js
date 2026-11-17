@@ -190,8 +190,16 @@ function dailyCoverageText(day, indicator, branches) {
   return parts.join(" · ");
 }
 function DailyCoverage({ day, indicator, branches }) {
-  return <p className="lr19-coverage" aria-live="polite">
-    {dailyCoverageText(day, indicator, branches)}
+  if (!day) return null;
+  const present = day.cuts.presentIds.length;
+  const expected = day.cuts.expected;
+  const pending = day.cuts.pendingIds.length;
+  const missing = day.cuts.missingIds.length;
+  return <p className="lr19-coverage lr20-summary" aria-live="polite"
+    title={dailyCoverageText(day, indicator, branches)}>
+    <span className="lr20-summary-item"><strong>{present}/{expected}</strong> cortes</span>
+    <span className="lr20-summary-item">Revisión de Finance pendiente: <strong>{pending}</strong></span>
+    <span className="lr20-summary-item">Cortes faltantes: <strong>{missing}</strong></span>
   </p>;
 }
 
