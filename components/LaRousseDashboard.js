@@ -73,11 +73,11 @@ function Forecast({ forecast }) {
   }).format(new Date(value + "T00:00:00Z")) : "No disponible";
   return (
     <article className="lr7-forecast">
-      <span className="lr2-metric-label">Proyección de cierre</span>
+      <span className="lr2-metric-label">Proyección de ingresos</span>
       <strong className="lr7-forecast-value">{money(forecast.projectedNet)}</strong>
       <div className="lr8-forecast-support">
         <div className="lr7-forecast-details">
-          <div><span>Ritmo diario de venta</span><b>{money(forecast.observedDaily)} / día reportado</b></div>
+          <div><span>Ritmo diario de ingresos</span><b>{money(forecast.observedDaily)} / día reportado</b></div>
           <div><span>Corte global</span><b>{date(forecast.globalDate)}</b></div>
         </div>
         {forecast.projectedNet !== null && forecast.expectedPairs !== null &&
@@ -147,7 +147,7 @@ function CutReview({ rows, confirmed }) {
         )}
       </div>
       <p className="lr8-review-foot">
-        Venta aprobada: <strong>{money(confirmed.net)}</strong>
+        Ingresos aprobados: <strong>{money(confirmed.net)}</strong>
         <span aria-hidden="true"> · </span>
         {confirmed.known}/{confirmed.count} cortes aprobados con importe
         {review.correction > 0 && (
@@ -158,7 +158,7 @@ function CutReview({ rows, confirmed }) {
   );
 }
 const DAILY_OPTIONS = [
-  { key: "net", label: "Ventas", selectedLabel: "Venta neta del día" },
+  { key: "net", label: "Ingresos", selectedLabel: "Ingresos del día" },
   { key: "tickets", label: "Tickets", selectedLabel: "Tickets del día" },
   { key: "pieces", label: "Piezas vendidas", selectedLabel: "Piezas vendidas del día" },
   { key: "footfall", label: "Afluencia", selectedLabel: "Afluencia del día" },
@@ -320,7 +320,7 @@ function DailySeries({ rows, indicator, selectedDate, setSelectedDate, calendarD
             <summary>Ver detalle diario</summary>
             <div className="lr2-table-scroll">
               <table>
-                <thead><tr><th>Fecha</th><th>{chosen.label}</th><th>Cobertura de venta</th></tr></thead>
+                <thead><tr><th>Fecha</th><th>{chosen.label}</th><th>Cobertura de ingresos</th></tr></thead>
                 <tbody>
                   {daily.map((day) => (
                     <tr key={day.date}>
@@ -529,17 +529,17 @@ function SalesByBranchChart({ rows, branches, selectedIds }) {
     };
   });
   return (
-    <article className="lr14-card" aria-label="Participación de venta por sucursal">
-      <h3>Venta por sucursal</h3>
+    <article className="lr14-card" aria-label="Participación de ingresos por sucursal">
+      <h3>Ingresos por sucursal</h3>
       {!result.chartable ? (
-        <p className="lr2-empty">No hay ventas netas verificables para calcular porcentajes.</p>
+        <p className="lr2-empty">No hay ingresos verificables para calcular porcentajes.</p>
       ) : (
         <>
           <div className="lr14-pie-layout">
             <div className="lr18-pie-stage">
               <svg viewBox="0 0 230 230" className="lr14-pie"
-                role="group" aria-label="Gráfica circular de venta por sucursal">
-                <title>Participación de ventas registradas por sucursal</title>
+                role="group" aria-label="Gráfica circular de ingresos por sucursal">
+                <title>Participación de ingresos registrados por sucursal</title>
                 {wedges.length === 1 ? (
                   <circle cx="115" cy="115" r="103" fill={wedges[0].color}
                     tabIndex={0}
@@ -1039,14 +1039,14 @@ function Branches({ data, selected, overall, month, globalCutoff }) {
   return (
     <section className="lr2-panel lr15-branch-performance">
       <h2>Desempeño por sucursal</h2>
-      {!overall.complete && <p className="lr3-note">Ranking parcial: hay registros sin venta neta comparable.</p>}
+      {!overall.complete && <p className="lr3-note">Ranking parcial: hay registros sin ingresos comparables.</p>}
       <div className="lr2-table-scroll lr16-ranking-desktop">
         <table>
           <thead>
             <tr>
               <th>Sucursal</th>
-              <th>Venta neta</th>
-              <th>Proyección de cierre</th>
+              <th>Ingresos</th>
+              <th>Proyección de ingresos</th>
               <th>Cumplimiento proyectado</th>
               <th>Meta</th>
               <th>Avance</th>
@@ -1112,7 +1112,7 @@ function Branches({ data, selected, overall, month, globalCutoff }) {
                 <span className="lr16-ranking-mobile-arrow" aria-hidden="true">⌄</span>
               </summary>
               <dl className="lr16-ranking-mobile-extra">
-                <div><dt>Venta neta</dt><dd>{b.m.sales.known ? money(b.m.sales.knownNet) : "No disponible"}</dd></div>
+                <div><dt>Ingresos</dt><dd>{b.m.sales.known ? money(b.m.sales.knownNet) : "No disponible"}</dd></div>
                 <div><dt>Avance actual</dt><dd>{percent(b.m.fullNet, b.m.target)}</dd></div>
                 <div><dt>Faltante</dt><dd>{money(b.m.remaining)}</dd></div>
                 <div><dt>Participación</dt><dd>{percent(overall.complete ? b.m.fullNet : null, overall.fullNet)}</dd></div>
@@ -1134,7 +1134,7 @@ function History({ data, selected, rows }) {
       <p>
         {rows.length} registros de origen histórico;{" "}
         {rows.filter((r) => r.state === "HISTORICO_SIN_REVISAR").length} sin
-        revisar. No se integran a venta neta, cumplimiento ni ticket promedio
+        revisar. No se integran a ingresos, cumplimiento ni ticket promedio
         comercial.
       </p>
       <p>
@@ -1153,7 +1153,7 @@ function History({ data, selected, rows }) {
               <th>Tickets</th>
               <th>Afluencia</th>
               <th>Piezas</th>
-              <th>Venta neta</th>
+              <th>Ingresos</th>
             </tr>
           </thead>
           <tbody>
@@ -1288,7 +1288,7 @@ export default function LaRousseDashboard() {
       <header className="lr2-header">
         <div>
           <div className="lr2-eyebrow">LA ROUSSE</div>
-          <h1>Ventas y desempeño</h1>
+          <h1>Ingresos y desempeño</h1>
         </div>
         <div className="lr2-controls">
           <label>
@@ -1332,12 +1332,15 @@ export default function LaRousseDashboard() {
       ) : (
         data && (
           <>
-            {rows.length > 0 && !m.complete && <p className="lr4-coverage">Venta mensual incompleta: no se calcula el avance hasta tener datos comparables de todas las sucursales.</p>}
+            {rows.length > 0 && !m.complete && <p className="lr4-coverage">Cobertura de ingresos incompleta: no se calcula el avance hasta tener datos comparables de todas las sucursales.</p>}
             <section className="lr4-lead" aria-label="Indicadores principales">
-              <Card hero label="Venta neta"
+              <Card hero label="Ventas"
+                value={m.sales.count > 0 && m.sales.declared !== null ? money(m.sales.declared) : "No disponible"}
+                note={!m.complete && rows.length ? "Subtotal disponible · excluye históricos" : null} />
+              <Card label="Ingresos"
                 value={m.sales.known ? money(m.sales.knownNet) : "No disponible"}
                 note={!m.complete && rows.length ? "Subtotal disponible · excluye históricos" : null} />
-              <Card label="Meta mensual" value={money(m.target)}
+              <Card label="Meta mensual de ingresos" value={money(m.target)}
                 note={m.targetKnown < data.targets.length ? "Faltan metas por configurar" : null} />
               <GoalProgress metrics={m} />
               <Forecast forecast={forecast} />
@@ -1412,7 +1415,7 @@ const styles = `.lr3-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1
 .lr6-scroll{padding:5px 0 3px}
 }
 
-.lr7 .lr4-lead{grid-template-columns:repeat(4,minmax(0,1fr))}
+.lr7 .lr4-lead{grid-template-columns:repeat(5,minmax(0,1fr))}
 .lr7 .lr4-activity{grid-template-columns:repeat(3,minmax(0,1fr))}
 .lr7-forecast{display:flex;flex-direction:column;gap:11px;justify-content:space-between;min-width:0;background:#fff;border:1px solid #e3e9f2;border-radius:16px;padding:20px 21px;box-shadow:0 5px 24px rgba(18,45,78,.035)}
 .lr7-forecast-value{font-size:clamp(21px,2.1vw,30px);font-weight:800;letter-spacing:-.045em;line-height:1.2;color:#1d395b;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}

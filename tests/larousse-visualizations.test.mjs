@@ -49,7 +49,7 @@ test("duplicate date or invalid net excludes affected branch, not invented value
   assert.equal(result.complete,false);
   assert.equal(result.total,90000n);
   assert.equal(result.entries[0].reason,"Cortes duplicados");
-  assert.equal(result.entries[2].reason,"Venta no disponible");
+  assert.equal(result.entries[2].reason,"Ingresos no disponibles");
   assert.equal(result.entries[1].tenths,1000);
 });
 
@@ -93,7 +93,7 @@ test("UI keeps pie and combo together under the same Daily month and branch filt
   const css=readFileSync(new URL("../app/globals.css",import.meta.url),"utf8");
   for(const snippet of [
     "function SalesByBranchChart(", "function ConversionFootfallChart(",
-    "Venta por sucursal", "Conversión y afluencia a piso por fecha",
+    "Ingresos por sucursal", "Conversión y afluencia a piso por fecha",
     'branchDailyMetrics(rows, calendarDates, selectedIds, "consolidated")',
     "setSelectedDate(day.date)", "No disponible",
   ]) assert.ok(src.includes(snippet),snippet);

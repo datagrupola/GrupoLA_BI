@@ -67,14 +67,14 @@ test("BI-03: UI exposes six daily metrics and per-branch projection without chan
   const { readFileSync } = await import("node:fs");
   const src = readFileSync(new URL("../components/LaRousseDashboard.js", import.meta.url), "utf8");
   assert.match(src, /dailyCommercialMetrics\(rows, dates\)/);
-  for (const label of ["Ventas", "Tickets", "Piezas vendidas", "Afluencia", "Conversión", "Piezas por ticket"])
+  for (const label of ["Ingresos", "Tickets", "Piezas vendidas", "Afluencia", "Conversión", "Piezas por ticket"])
     assert.ok(src.includes('label: "' + label + '"'));
   assert.match(src, /commercialProjection\(scopedRows, scopedTargets, month, globalCutoff\)/);
-  assert.match(src, /<th>Proyección de cierre<\/th>/);
+  assert.match(src, /<th>Proyección de ingresos<\/th>/);
   assert.match(src, /<th>Cumplimiento proyectado<\/th>/);
   assert.match(src, /branch \? read\("([^"]*)"\)\.catch\(\(\) => null\)/);
   assert.match(src, /commercialProjection\(rows, data\?\.targets \|\| \[\], month, globalCutoff\)/);
-  assert.match(src, /Ritmo diario de venta/);
+  assert.match(src, /Ritmo diario de ingresos/);
 });
 
 
@@ -104,7 +104,7 @@ test("BI-03: six chart options use whole-unit number formatting in both view mod
   const { readFileSync } = await import("node:fs");
   const src = readFileSync(new URL("../components/LaRousseDashboard.js", import.meta.url), "utf8");
   const options = src.slice(src.indexOf("const DAILY_OPTIONS = ["), src.indexOf("function DailySeries("));
-  for (const [key, label] of [["net","Ventas"], ["tickets","Tickets"],
+  for (const [key, label] of [["net","Ingresos"], ["tickets","Tickets"],
     ["pieces","Piezas vendidas"], ["footfall","Afluencia"],
     ["conversion","Conversión"], ["piecesPerTicket","Piezas por ticket"]])
     assert.ok(options.includes('{ key: "'+key+'", label: "'+label+'" }') ||
