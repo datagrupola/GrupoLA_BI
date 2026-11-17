@@ -1078,6 +1078,10 @@ function CommercialComparison({ comparison, windows, loading, error, mode, onMod
   );
 }
 
+function branchCutCoverage(projection) {
+  return projection.cutoffDay === null ? "No disponible" :
+    projection.countedPairs + "/" + projection.cutoffDay;
+}
 function Branches({ data, selected, overall, month, globalCutoff }) {
   const groups = data.branches
     .filter((b) => !selected || b.id === selected)
@@ -1088,7 +1092,6 @@ function Branches({ data, selected, overall, month, globalCutoff }) {
         ...b,
         m: commercialMetrics(scopedRows, scopedTargets),
         projection: commercialProjection(scopedRows, scopedTargets, month, globalCutoff),
-        count: scopedRows.length,
       };
     })
     .sort(compareProjectedCompliance);
@@ -1108,7 +1111,7 @@ function Branches({ data, selected, overall, month, globalCutoff }) {
               <th>Avance</th>
               <th>Faltante</th>
               <th>Participación</th>
-              <th>Cobertura</th>
+              <th>Cortes reportados</th>
               <th>Tickets</th>
             </tr>
           </thead>
@@ -1144,7 +1147,7 @@ function Branches({ data, selected, overall, month, globalCutoff }) {
                   )}
                 </td>
                 <td>
-                  {b.m.sales.known}/{b.count}
+                  {branchCutCoverage(b.projection)}
                 </td>
                 <td>{number(b.m.tickets.value)}</td>
               </tr>
@@ -1172,7 +1175,7 @@ function Branches({ data, selected, overall, month, globalCutoff }) {
                 <div><dt>Avance actual</dt><dd>{percent(b.m.fullNet, b.m.target)}</dd></div>
                 <div><dt>Faltante</dt><dd>{money(b.m.remaining)}</dd></div>
                 <div><dt>Participación</dt><dd>{percent(overall.complete ? b.m.fullNet : null, overall.fullNet)}</dd></div>
-                <div><dt>Cobertura</dt><dd>{b.m.sales.known}/{b.count}</dd></div>
+                <div><dt>Cortes reportados</dt><dd>{branchCutCoverage(b.projection)}</dd></div>
                 <div><dt>Tickets</dt><dd>{number(b.m.tickets.value)}</dd></div>
               </dl>
             </details>
