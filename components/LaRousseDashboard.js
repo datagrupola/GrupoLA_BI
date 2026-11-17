@@ -68,6 +68,8 @@ function GoalProgress({ metrics }) {
   );
 }
 function Forecast({ forecast }) {
+  const missingCuts = forecast.expectedPairs === null ? null :
+    Math.max(0, forecast.expectedPairs - forecast.countedPairs);
   const date = (value) => value ? new Intl.DateTimeFormat("es-MX", {
     day: "numeric", month: "short", year: "numeric", timeZone: "UTC",
   }).format(new Date(value + "T00:00:00Z")) : "No disponible";
@@ -80,10 +82,9 @@ function Forecast({ forecast }) {
           <div><span>Ritmo diario de venta</span><b>{money(forecast.observedDaily)} / día reportado</b></div>
           <div><span>Corte global</span><b>{date(forecast.globalDate)}</b></div>
         </div>
-        {forecast.projectedNet !== null && forecast.expectedPairs !== null &&
-          forecast.countedPairs < forecast.expectedPairs && (
+        {forecast.projectedNet !== null && missingCuts > 0 && (
             <small className="lr7-forecast-warning">
-              Cobertura de fechas parcial: {forecast.countedPairs}/{forecast.expectedPairs} sucursal-días registrados.
+              {missingCuts} {missingCuts === 1 ? "corte faltante" : "cortes faltantes"}.
             </small>
           )}
         {forecast.scopedDate !== null && forecast.globalDate !== null &&
@@ -1472,10 +1473,10 @@ const styles = `.lr3-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1
 .lr7-forecast{display:flex;flex-direction:column;gap:11px;justify-content:space-between;min-width:0;background:#fff;border:1px solid #e3e9f2;border-radius:16px;padding:20px 21px;box-shadow:0 5px 24px rgba(18,45,78,.035)}
 .lr7-forecast-value{font-size:clamp(21px,2.1vw,30px);font-weight:800;letter-spacing:-.045em;line-height:1.2;color:#1d395b;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
 .lr7-forecast-details{display:grid;gap:7px}
-.lr7-forecast-details>div{display:flex;justify-content:space-between;flex-wrap:wrap;gap:3px 9px;font-size:11px}
-.lr7-forecast-details span{color:#7b899e}
-.lr7-forecast-details b{font-weight:750;color:#38516b;text-align:right}
-.lr7-forecast-warning{display:block;font-size:10px;color:#9a732b;line-height:1.45}
+.lr7-forecast-details>div{display:flex;justify-content:space-between;flex-wrap:wrap;gap:3px 9px;font-size:12px}
+.lr7-forecast-details span{color:#586b86}
+.lr7-forecast-details b{font-weight:750;color:#1d395b;text-align:right}
+.lr7-forecast-warning{display:block;font-size:12px;color:#9a732b;line-height:1.45;font-weight:650}
 @media(max-width:1180px){.lr7 .lr4-lead{grid-template-columns:repeat(2,minmax(0,1fr))}.lr7 .lr4-goal{grid-column:auto}.lr7 .lr4-activity{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:800px){.lr7 .lr4-activity{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.lr7 .lr4-lead{grid-template-columns:1fr}.lr7-forecast{min-height:162px}}

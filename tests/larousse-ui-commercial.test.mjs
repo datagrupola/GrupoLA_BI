@@ -81,3 +81,12 @@ test("ranking compares fractions exactly and breaks ties deterministically by br
     ["tie-a", "higher", "tie-z", "lower"]);
   assert.equal(compareProjectedCompliance(branch("a", "A", 0n, 100n), branch("b", "B", null, 100n)), -1);
 });
+
+test("forecast summarizes missing branch-day cuts in legible concise language", () => {
+  assert.match(src, /const missingCuts = forecast\.expectedPairs === null \? null :/);
+  assert.match(src, /Math\.max\(0, forecast\.expectedPairs - forecast\.countedPairs\)/);
+  assert.match(src, /missingCuts === 1 \? "corte faltante" : "cortes faltantes"/);
+  assert.doesNotMatch(src, /Cobertura de fechas parcial:/);
+  assert.match(src, /lr7-forecast-warning\{display:block;font-size:12px/);
+  assert.match(css, /\.lr8-forecast-support \{ align-self:stretch; width:100%/);
+});
