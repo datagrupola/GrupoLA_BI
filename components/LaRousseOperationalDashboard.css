@@ -1,0 +1,85 @@
+/* Presentational, isolated to the Operativo dashboard. */
+.opx-dashboard{width:100%;max-width:1780px;padding:24px clamp(18px,2.2vw,38px) 48px;color:#17283e}
+.opx-dashboard .opx-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin:0 0 16px}
+.opx-dashboard .opx-title{min-width:0}
+.opx-dashboard .opx-eyebrow{display:block;color:#37729a;font-size:10px;font-weight:850;letter-spacing:.16em;margin-bottom:7px}
+.opx-dashboard .opx-title h1{font-size:clamp(29px,3.3vw,44px);font-weight:850;letter-spacing:-.055em;line-height:1.07;color:#142b45;margin:0}
+.opx-dashboard .opx-title p{font-size:13px;color:#63758b;line-height:1.5;margin:9px 0 0}
+.opx-dashboard .opx-controls{display:flex;align-items:end;flex-wrap:wrap;gap:9px;justify-content:flex-end}
+.opx-dashboard .opx-controls label{display:grid;gap:6px;color:#50657f;font-size:11px;font-weight:780}
+.opx-dashboard .opx-controls input,.opx-dashboard .opx-controls select{min-height:41px;width:167px;border-radius:10px;border:1px solid #d9e2ed;background:#fff;padding:9px 11px;color:#1b314c;font-size:12px;max-width:100%}
+.opx-dashboard .opx-controls select{width:185px}
+.opx-dashboard .opx-controls button{min-height:41px;border:0;border-radius:10px;padding:10px 15px;background:#153d63;color:white;font-weight:780;font-size:12px;cursor:pointer}
+.opx-dashboard button:focus-visible,.opx-dashboard select:focus-visible,.opx-dashboard input:focus-visible{outline:3px solid #2c90d5;outline-offset:2px}
+.opx-dashboard .opx-context{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#eef3f8;border:1px solid #e0e8f0;border-radius:12px;padding:11px 14px;margin-bottom:24px;color:#62758a;font-size:11px}
+.opx-dashboard .opx-context>div{display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.opx-dashboard .opx-context strong{color:#284e6e}
+.opx-dashboard .opx-status-dot{width:8px;height:8px;border-radius:50%;background:#0d9b84;margin-right:6px}
+.opx-dashboard .opx-section{margin-bottom:24px}
+.opx-dashboard .opx-section-title{display:flex;justify-content:space-between;align-items:end;gap:16px;margin:0 0 12px}
+.opx-dashboard .opx-section-title span{color:#56809d;font-size:10px;letter-spacing:.13em;font-weight:840}
+.opx-dashboard .opx-section-title h2{font-size:clamp(18px,1.7vw,22px);font-weight:820;letter-spacing:-.035em;color:#1b314b;margin-top:4px}
+.opx-dashboard .opx-section-title p{font-size:11px;color:#8290a3;margin-bottom:3px;text-align:right}
+.opx-dashboard .opx-hero-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.opx-dashboard .opx-kpi{min-width:0;border-radius:16px;background:#fff;padding:21px 21px 17px;border:1px solid #dfe7f0;box-shadow:0 6px 22px rgba(16,39,69,.035);min-height:172px;display:flex;flex-direction:column}
+.opx-dashboard .opx-kpi-kicker{color:#5c829b;font-size:10px;letter-spacing:.14em;font-weight:840;margin-bottom:12px}
+.opx-dashboard .opx-kpi h3{font-size:12px;line-height:1.3;color:#58708b;font-weight:780;margin:0}
+.opx-dashboard .opx-kpi-value{font-size:clamp(31px,3vw,43px);font-weight:870;line-height:1.14;letter-spacing:-.05em;font-variant-numeric:tabular-nums;color:#17375b;margin:12px 0 7px}
+.opx-dashboard .opx-kpi p{font-size:11px;line-height:1.5;color:#7e8da2;margin-top:auto}
+.opx-dashboard .opx-kpi--primary{color:#fff;border-color:#1c456b;background:linear-gradient(132deg,#183554,#265b7d)}
+.opx-dashboard .opx-kpi--primary .opx-kpi-kicker,.opx-dashboard .opx-kpi--primary h3,.opx-dashboard .opx-kpi--primary p{color:#c8dcee}
+.opx-dashboard .opx-kpi--primary .opx-kpi-value{color:#fff}
+.opx-dashboard .opx-kpi--alert .opx-kpi-value{color:#b44351}
+.opx-dashboard .opx-flow-strip{margin-top:11px;background:#fff;border:1px solid #dfe7f0;border-radius:14px;display:flex;align-items:center;gap:0;flex-wrap:wrap;overflow:hidden}
+.opx-dashboard .opx-flow-strip>div{padding:12px 24px;display:flex;align-items:baseline;justify-content:flex-start;gap:13px;border-right:1px solid #e8edf3}
+.opx-dashboard .opx-flow-strip>div span{font-size:11px;color:#687b90;font-weight:720}
+.opx-dashboard .opx-flow-strip>div strong{font-size:19px;font-weight:860;font-variant-numeric:tabular-nums;color:#214a6f}
+.opx-dashboard .opx-flow-strip>p{font-size:10px;color:#8d98aa;padding:10px 18px;margin-left:auto;line-height:1.4}
+.opx-dashboard .opx-two-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.opx-dashboard .opx-panel{min-width:0;padding:20px 21px;border:1px solid #e1e7f0;border-radius:15px;background:#fff;box-shadow:0 6px 21px rgba(17,44,77,.028)}
+.opx-dashboard .opx-panel-heading{display:flex;align-items:start;justify-content:space-between;gap:14px;margin-bottom:18px}
+.opx-dashboard .opx-panel-heading h3,.opx-dashboard .opx-reading h3{font-size:15px;font-weight:830;letter-spacing:-.025em;color:#1d3856;line-height:1.3}
+.opx-dashboard .opx-panel-heading p{font-size:11px;color:#8190a3;line-height:1.45;margin-top:5px}
+.opx-dashboard .opx-chart-total{text-align:right;display:grid;gap:2px;white-space:nowrap}
+.opx-dashboard .opx-chart-total strong{font-variant-numeric:tabular-nums;font-size:25px;letter-spacing:-.05em;color:#21415f;line-height:1}
+.opx-dashboard .opx-chart-total span{color:#8190a4;font-size:10px}
+.opx-dashboard .opx-active-day{display:flex;gap:10px;align-items:center;justify-content:space-between;color:#77899c;font-size:10px;background:#f7f9fc;border-radius:8px;padding:9px 11px}
+.opx-dashboard .opx-active-day strong{color:#235171;font-size:11px;font-variant-numeric:tabular-nums}
+.opx-dashboard .opx-chart{width:100%;height:auto;max-height:214px;display:block;margin-top:10px}
+.opx-dashboard .opx-hit-area{fill:transparent;cursor:crosshair}
+.opx-dashboard .opx-chart g[role="button"]:focus-visible .opx-hit-area{fill:rgba(37,101,151,.08);stroke:#3784c1;stroke-width:2}
+.opx-dashboard .opx-detail-layout{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(280px,1fr);gap:12px}
+.opx-dashboard .opx-types{display:grid;gap:14px}
+.opx-dashboard .opx-type-head{display:flex;gap:16px;align-items:baseline;justify-content:space-between;font-size:12px;color:#526b83}
+.opx-dashboard .opx-type-head b{font-size:12px;color:#203e5d;white-space:nowrap;font-variant-numeric:tabular-nums}
+.opx-dashboard .opx-type-head small{font-size:10px;font-weight:500;color:#8794a6}
+.opx-dashboard .opx-track{width:100%;height:7px;margin-top:6px;border-radius:30px;background:#edf2f6;overflow:hidden}
+.opx-dashboard .opx-track i{display:block;height:100%;background:#c16a6f;border-radius:30px}
+.opx-dashboard .opx-empty{font-size:12px;color:#75899e;padding:23px 0}
+.opx-dashboard .opx-reading{background:#f6f9fc;border-color:#e4eaf1}
+.opx-dashboard .opx-reading h3{margin-bottom:15px}
+.opx-dashboard .opx-reading p{margin-top:13px;font-size:12px;line-height:1.6;color:#577087}
+.opx-dashboard .opx-reading strong{color:#1e4264}
+.opx-dashboard .opx-order{display:grid;gap:5px;color:#75879c;font-size:10px;font-weight:750;white-space:nowrap}
+.opx-dashboard .opx-order select{border:1px solid #dde5ee;border-radius:9px;padding:7px 8px;background:white;color:#244365;font-size:11px}
+.opx-dashboard .opx-compare-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.opx-dashboard .opx-compare-pair>div{border:1px solid #e2e9f1;background:#f8fafc;border-radius:10px;padding:12px 15px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.opx-dashboard .opx-compare-pair span{color:#60758a;font-size:11px;margin-right:auto}
+.opx-dashboard .opx-compare-pair strong{color:#284968;font-size:12px}
+.opx-dashboard .opx-compare-pair b{font-size:19px;font-variant-numeric:tabular-nums;color:#1c456a}
+.opx-dashboard .opx-table-scroll{overflow-x:auto;max-width:100%}
+.opx-dashboard .opx-table{width:100%;border-collapse:collapse;font-size:12px;text-align:right}
+.opx-dashboard .opx-table th,.opx-dashboard .opx-table td{padding:13px 12px;border-bottom:1px solid #edf1f5;font-variant-numeric:tabular-nums;white-space:nowrap}
+.opx-dashboard .opx-table thead th{color:#7b8da0;font-size:10px;font-weight:840}
+.opx-dashboard .opx-table tbody th{color:#1b3c60;font-size:12px;font-weight:810}
+.opx-dashboard .opx-table th:first-child{text-align:left}
+.opx-dashboard .opx-table tbody tr:hover{background:#f7fafc}
+.opx-dashboard .opx-tags{display:flex;justify-content:flex-end;align-items:center;gap:5px}
+.opx-dashboard .opx-tag{display:inline-block;font-size:10px;color:#758499;border-radius:6px;background:#edf2f7;padding:5px 7px;font-weight:820}
+.opx-dashboard .opx-tag--watch{background:#fff0e1;color:#a15a1e}
+.opx-dashboard .opx-fineprint{font-size:11px;color:#788b9e;line-height:1.55;margin-top:14px}
+.opx-dashboard .opx-footer{padding:11px 0;color:#8190a0;font-size:11px;border-top:1px solid #e0e7ef}
+@media (max-width:1240px){.opx-dashboard .opx-hero-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.opx-dashboard .opx-kpi{min-height:150px}.opx-dashboard .opx-two-col,.opx-dashboard .opx-detail-layout{grid-template-columns:1fr}}
+@media (max-width:850px){.opx-dashboard .opx-header{flex-direction:column}.opx-dashboard .opx-controls{justify-content:flex-start;width:100%}.opx-dashboard .opx-context{align-items:start}.opx-dashboard .opx-flow-strip>p{margin-left:0;width:100%;border-top:1px solid #e8edf3}.opx-dashboard .opx-flow-strip>div{flex:1}}
+@media (max-width:560px){.opx-dashboard{padding:18px 12px 32px}.opx-dashboard .opx-title h1{font-size:30px}.opx-dashboard .opx-hero-grid{gap:9px}.opx-dashboard .opx-kpi{padding:15px 13px;min-height:176px}.opx-dashboard .opx-kpi-value{font-size:31px}.opx-dashboard .opx-kpi h3{font-size:11px}.opx-dashboard .opx-controls label{min-width:0;flex:1}.opx-dashboard .opx-controls input,.opx-dashboard .opx-controls select{width:100%}.opx-dashboard .opx-controls button{width:100%}.opx-dashboard .opx-section-title{align-items:start;flex-direction:column;gap:5px}.opx-dashboard .opx-section-title p{text-align:left}.opx-dashboard .opx-flow-strip>div{padding:11px 9px;flex-direction:column;gap:3px}.opx-dashboard .opx-panel{padding:16px 13px}.opx-dashboard .opx-compare-pair{grid-template-columns:1fr}.opx-dashboard .opx-panel-heading{flex-direction:column}.opx-dashboard .opx-order{align-self:flex-start}}
+@media (max-width:355px){.opx-dashboard .opx-hero-grid{grid-template-columns:1fr}.opx-dashboard .opx-kpi{min-height:130px}}
