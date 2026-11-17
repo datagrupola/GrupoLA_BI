@@ -75,7 +75,7 @@ test("zero net and absence do not fabricate valid pie slices", () => {
   assert.equal(empty.total,null);
 });
 
-test("combo uses consolidated weighted conversion, with gaps for incomplete days", () => {
+test("combo uses consolidated weighted conversion and available partial days", () => {
   const dates=["2026-11-01","2026-11-02"];
   const days=branchDailyMetrics([
     row("a",dates[0],"100.00",{tickets:"2",footfall:"8"}),
@@ -84,8 +84,9 @@ test("combo uses consolidated weighted conversion, with gaps for incomplete days
   ],dates,["a","b"],"consolidated")[0].days;
   assert.equal(days[0].footfall,25n);
   assert.equal(days[0].conversion,2000n);
-  assert.equal(days[1].footfall,null);
-  assert.equal(days[1].conversion,null);
+  assert.equal(days[1].footfall,3n);
+  assert.equal(days[1].conversion,3333n);
+  assert.deepEqual(days[1].cuts.missingIds,["b"]);
 });
 
 test("UI keeps pie and combo together under the same Daily month and branch filters", () => {

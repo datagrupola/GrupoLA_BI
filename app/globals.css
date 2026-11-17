@@ -770,3 +770,11 @@ button,input,select { font:inherit; }
 @media(max-width:650px){.op-dashboard{padding:20px 14px 34px}.op-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.op-secondary-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.op-metric{padding:13px}.op-metric>strong{font-size:26px}.op-metric>span{font-size:10px}.op-secondary-kpis .op-metric{padding:12px 10px}.op-secondary-kpis .op-metric>strong{font-size:20px}.op-panel{padding:16px 13px}.bi-view-nav{padding:0 15px}}
 @media(max-width:390px){.op-kpis{grid-template-columns:1fr 1fr}.op-metric>strong{font-size:24px}.op-secondary-kpis{grid-template-columns:1fr 1fr}.op-secondary-kpis .op-metric:last-child{grid-column:span 2}}
 @media(prefers-reduced-motion:reduce){.bi-view-nav button{transition:none}}
+
+/* Daily commercial coverage: details follow only the selected date. */
+.lr19-coverage{font-size:12px;line-height:1.55;color:#46546a;margin:6px 0 10px;overflow-wrap:anywhere}
+.lr6-chart .lr19-partial{stroke:#a55b08;stroke-width:2.5;stroke-dasharray:3 2;fill:#fff4d6}
+.lr6-chart .lr19-partial-bar{stroke:#a55b08;stroke-width:2;stroke-dasharray:4 2;fill:#fff4d6}
+.lr11-legend-item:has(.lr19-coverage){flex-wrap:wrap}
+.lr11-legend-item .lr19-coverage{flex-basis:100%}
+.lr14-selected-day>div{flex-basis:100%;min-width:0}
