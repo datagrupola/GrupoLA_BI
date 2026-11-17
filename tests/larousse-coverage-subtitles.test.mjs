@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { branchDailyMetrics } from "../lib/larousse-branch-series.mjs";
 
 const ui = readFileSync(new URL("../components/LaRousseDashboard.js", import.meta.url), "utf8");
+const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
 const ids = ["CAMELINAS", "CENTRO", "LAZARO", "PEPSI", "PONIENTE", "GRAN_P_LEON", "DEL_RIO", "BBVA"];
 const date = "2026-11-13";
 const dayFor = rows => branchDailyMetrics(rows, [date], ids, "consolidated")[0].days[0];
@@ -42,4 +43,13 @@ test("zero-cut day and valid-zero full day preserve separate counts", () => {
   assert.equal(complete.cuts.presentIds.length,8);
   assert.equal(complete.cuts.missingIds.length,0);
   assert.equal(complete.coverage.net.known,8);
+});
+
+test("Finance review and missing cut colors change independently to green at zero", () => {
+  const part = ui.split("function DailyCoverage({ day, indicator, branches }) {")[1].split("\nfunction DailySeries(")[0];
+  assert.match(part, /pending === 0 \? "lr20-status-clear" : "lr20-status-pending"/);
+  assert.match(part, /missing === 0 \? "lr20-status-clear" : "lr20-status-missing"/);
+  assert.match(css, /\.lr20-status-clear,\.lr20-status-clear strong\{color:#15803d\}/);
+  assert.match(css, /\.lr20-status-pending,\.lr20-status-pending strong\{color:#a55b08\}/);
+  assert.match(css, /\.lr20-status-missing,\.lr20-status-missing strong\{color:#b42318\}/);
 });

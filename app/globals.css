@@ -783,3 +783,8 @@ button,input,select { font:inherit; }
 .lr20-summary{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 18px}
 .lr20-summary-item{display:inline-flex;align-items:baseline;gap:4px}
 .lr20-summary-item strong{color:#193b63;font-weight:750;font-variant-numeric:tabular-nums}
+
+/* Conditional status colors: unresolved reviews amber, missing cuts red, both green at zero. */
+.lr20-status-clear,.lr20-status-clear strong{color:#15803d}
+.lr20-status-pending,.lr20-status-pending strong{color:#a55b08}
+.lr20-status-missing,.lr20-status-missing strong{color:#b42318}
