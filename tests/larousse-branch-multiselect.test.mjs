@@ -31,7 +31,7 @@ test("consolidated mode sums sales and denominators, never averages rates", () =
   assert.equal(series[0].days[0].conversion, 2000n); // 5 / 25 = 20.00%
   assert.equal(series[0].days[0].piecesPerTicket, 300n); // 15 / 5 = 3.00
 });
-test("missing or duplicate branch-day blocks only that consolidated date", () => {
+test("missing or duplicate branch-day retains only usable contributions", () => {
   const series = branchDailyMetrics([
     row("a", dates[0]), row("b", dates[0]),
     row("a", dates[1]), // b absent
@@ -41,8 +41,11 @@ test("missing or duplicate branch-day blocks only that consolidated date", () =>
   for (const day of series.slice(1)) {
     assert.equal(day.complete, false);
     for (const key of ["net","footfall","tickets","pieces","conversion","piecesPerTicket"])
-      assert.equal(day[key], null);
+      assert.equal(day[key], key === "net" ? 10000n : key === "footfall" ? 10n :
+        key === "tickets" ? 2n : key === "pieces" ? 6n : key === "conversion" ? 2000n : 300n);
   }
+  assert.deepEqual(series[1].cuts.missingIds, ["b"]);
+  assert.deepEqual(series[2].cuts.duplicateIds, ["a"]);
 });
 test("comparison mode retains valid branches independently and excludes historical", () => {
   const series = branchDailyMetrics([

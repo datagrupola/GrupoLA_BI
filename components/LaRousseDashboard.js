@@ -166,7 +166,36 @@ const DAILY_OPTIONS = [
   { key: "piecesPerTicket", label: "Piezas por ticket", selectedLabel: "Piezas por ticket del día" },
 ];
 const DAILY_UNIT_INDICATORS = new Set(["tickets", "pieces", "footfall"]);
-function DailySeries({ rows, indicator, selectedDate, setSelectedDate, calendarDates, dailyData }) {
+// One description shared by the selected point, accessible target and detail table.
+function dailyCoverageText(day, indicator, branches) {
+  const coverage = day?.coverage?.[indicator];
+  if (!coverage) return "";
+  const names = new Map(branches.map((branch) => [branch.id, branch.name]));
+  const list = (ids) => ids.map((id) => names.get(id) || id).join(", ");
+  const parts = ["Cobertura: " + coverage.known + "/" + coverage.expected + " sucursales",
+    "Cortes existentes: " + day.cuts.presentIds.length + "/" + day.cuts.expected,
+    "Estado: " + (day[indicator] === null ? "Sin valor utilizable" :
+      coverage.complete ? "Cobertura completa" : "Consolidado parcial")];
+  for (const [label, ids] of [
+    ["Falta corte", day.cuts.missingIds],
+    ["Corte duplicado (excluido)", day.cuts.duplicateIds],
+    ["Estado no reportable (excluido)", day.cuts.unreportableIds],
+    ["Datos insuficientes para este indicador", coverage.insufficientIds],
+    ["Datos inválidos para este indicador", coverage.invalidIds],
+    ["Pendiente de revisión", day.cuts.pendingIds],
+    ["Requiere corrección", day.cuts.correctionIds],
+  ]) if (ids.length) parts.push(label + ": " + list(ids));
+  if (coverage.zeroDenominator)
+    parts.push("Denominador consolidado cero: razón no disponible");
+  return parts.join(" · ");
+}
+function DailyCoverage({ day, indicator, branches }) {
+  return <p className="lr19-coverage" aria-live="polite">
+    {dailyCoverageText(day, indicator, branches)}
+  </p>;
+}
+
+function DailySeries({ rows, indicator, selectedDate, setSelectedDate, calendarDates, dailyData, branches }) {
   const chosen = DAILY_OPTIONS.find((option) => option.key === indicator) || DAILY_OPTIONS[0];
   const observedDates = calendarDates || [...new Set(rows.map((row) => row.date))].sort();
   const dates = [];
@@ -244,6 +273,7 @@ function DailySeries({ rows, indicator, selectedDate, setSelectedDate, calendarD
             </div>
             <time dateTime={selected.date}>{dayLabel(selected.date)}</time>
           </div>
+          <DailyCoverage day={selected} indicator={indicator} branches={branches} />
           <div className="lr6-scroll" role="region"
             aria-label={"Gráfica diaria de " + chosen.label.toLowerCase()} tabIndex={0}>
             <svg className="lr6-chart" width={chartWidth} height={chartHeight}
@@ -285,6 +315,7 @@ function DailySeries({ rows, indicator, selectedDate, setSelectedDate, calendarD
               {points.filter((point) => point.y !== null).map((point) => (
                 <circle key={"dot-" + point.date}
                   className={"lr6-dot lr18-visual-dot" +
+                    (point.coverage?.[indicator].complete === false ? " lr19-partial" : "") +
                     (selected.date === point.date ? " lr6-dot-active" : "")}
                   cx={point.x} cy={point.y} r={selected.date === point.date ? 6 : 4.5}
                   aria-hidden="true" />
@@ -295,7 +326,8 @@ function DailySeries({ rows, indicator, selectedDate, setSelectedDate, calendarD
                   (point.x + points[index + 1].x) / 2;
                 return (
                   <g key={"hover-" + point.date} role="button" tabIndex={0}
-                    aria-label={dayLabel(point.date) + ": " + formatValue(point[indicator])}
+                    aria-label={dayLabel(point.date) + ": " + formatValue(point[indicator]) + " · " +
+                      dailyCoverageText(point, indicator, branches)}
                     aria-pressed={selected.date === point.date}
                     onMouseEnter={() => setSelectedDate(point.date)}
                     onFocus={() => setSelectedDate(point.date)}
@@ -308,7 +340,8 @@ function DailySeries({ rows, indicator, selectedDate, setSelectedDate, calendarD
                     }}>
                     <rect className="lr18-hit-zone" x={from} y={top}
                       width={to - from} height={chartInnerHeight} />
-                    <title>{dayLabel(point.date) + " · " + formatValue(point[indicator])}</title>
+                    <title>{dayLabel(point.date) + " · " + formatValue(point[indicator]) + " · " +
+                      dailyCoverageText(point, indicator, branches)}</title>
                   </g>
                 );
               })}
@@ -320,13 +353,13 @@ function DailySeries({ rows, indicator, selectedDate, setSelectedDate, calendarD
             <summary>Ver detalle diario</summary>
             <div className="lr2-table-scroll">
               <table>
-                <thead><tr><th>Fecha</th><th>{chosen.label}</th><th>Cobertura de venta</th></tr></thead>
+                <thead><tr><th>Fecha</th><th>{chosen.label}</th><th>Cobertura del indicador y estado de cortes</th></tr></thead>
                 <tbody>
                   {daily.map((day) => (
                     <tr key={day.date}>
                       <td>{day.date}</td>
                       <td>{formatValue(day[indicator])}</td>
-                      <td>{day.known}/{day.count}</td>
+                      <td>{dailyCoverageText(day, indicator, branches)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -408,6 +441,8 @@ function BranchComparisonSeries({ indicator, series, branches, dates, selectedDa
                   <span className="lr11-color" style={{ backgroundColor: item.color }} aria-hidden="true" />
                   <span>{item.name}</span>
                   <strong>{formatValue(item.days.find((day) => day.date === activeDate)?.[indicator] ?? null)}</strong>
+                  <DailyCoverage day={item.days.find((day) => day.date === activeDate)}
+                    indicator={indicator} branches={branches} />
                 </div>
               ))}
             </div>
@@ -446,6 +481,7 @@ function BranchComparisonSeries({ indicator, series, branches, dates, selectedDa
               {plotted.flatMap((item) => item.points.filter((point) => point.y !== null).map((point) => (
                 <circle key={item.id + "-" + point.date}
                   className={"lr6-dot lr18-visual-dot" +
+                    (point.coverage?.[indicator].complete === false ? " lr19-partial" : "") +
                     (activeDate === point.date ? " lr6-dot-active" : "")}
                   style={{ stroke: item.color, fill: activeDate === point.date ? item.color : "#fff" }}
                   cx={point.x} cy={point.y} r={activeDate === point.date ? 6 : 4.5}
@@ -458,7 +494,8 @@ function BranchComparisonSeries({ indicator, series, branches, dates, selectedDa
                 return (
                   <g key={"hover-" + date} role="button" tabIndex={0}
                     aria-label={dayLabel(date) + ": " + plotted.map((item) =>
-                      item.name + " " + formatValue(item.days[index]?.[indicator] ?? null)
+                      item.name + " " + formatValue(item.days[index]?.[indicator] ?? null) + " · " +
+                      dailyCoverageText(item.days[index], indicator, branches)
                     ).join(", ")}
                     aria-pressed={activeDate === date}
                     onMouseEnter={() => setSelectedDate(date)}
@@ -473,7 +510,8 @@ function BranchComparisonSeries({ indicator, series, branches, dates, selectedDa
                     <rect className="lr18-hit-zone" x={from} y={top}
                       width={to - from} height={innerHeight} />
                     <title>{dayLabel(date) + " · " + plotted.map((item) =>
-                      item.name + ": " + formatValue(item.days[index]?.[indicator] ?? null)
+                      item.name + ": " + formatValue(item.days[index]?.[indicator] ?? null) + " · " +
+                      dailyCoverageText(item.days[index], indicator, branches)
                     ).join(" · ")}</title>
                   </g>
                 );
@@ -489,7 +527,8 @@ function BranchComparisonSeries({ indicator, series, branches, dates, selectedDa
                 <thead><tr><th>Fecha</th>{plotted.map((item) => <th key={item.id}>{item.name}</th>)}</tr></thead>
                 <tbody>{dates.map((date, index) => <tr key={date}>
                   <td>{date}</td>
-                  {plotted.map((item) => <td key={item.id}>{formatValue(item.days[index]?.[indicator] ?? null)}</td>)}
+                  {plotted.map((item) => <td key={item.id}>{formatValue(item.days[index]?.[indicator] ?? null)}
+                    <p className="lr19-coverage">{dailyCoverageText(item.days[index], indicator, branches)}</p></td>)}
                 </tr>)}</tbody>
               </table>
             </div>
@@ -601,7 +640,7 @@ function SalesByBranchChart({ rows, branches, selectedIds }) {
   );
 }
 
-function ConversionFootfallChart({ days, selectedDate, setSelectedDate }) {
+function ConversionFootfallChart({ days, selectedDate, setSelectedDate, branches }) {
   const known = days.filter((day) => day.conversion !== null || day.footfall !== null);
   let peakConversion = 0n;
   let peakFootfall = 0n;
@@ -676,7 +715,8 @@ function ConversionFootfallChart({ days, selectedDate, setSelectedDate }) {
                 );
               })}
               {series.map((day, index) => day.barY === null ? null : (
-                <rect key={"bar-" + day.date} x={day.x - Math.min(12, stepX * .3)}
+                <rect key={"bar-" + day.date}
+                  className={day.coverage.footfall.complete ? undefined : "lr19-partial-bar"} x={day.x - Math.min(12, stepX * .3)}
                   y={day.barY} width={Math.min(24, stepX * .6)}
                   height={chartBottom - day.barY} fill="#274d92" rx="1" />
               ))}
@@ -686,7 +726,8 @@ function ConversionFootfallChart({ days, selectedDate, setSelectedDate }) {
                   fill="none" />
               ))}
               {series.filter((day) => day.lineY !== null).map((day) => (
-                <circle key={"point-" + day.date} cx={day.x} cy={day.lineY}
+                <circle key={"point-" + day.date}
+                  className={day.coverage.conversion.complete ? undefined : "lr19-partial"} cx={day.x} cy={day.lineY}
                   r={activeDay?.date === day.date ? 5.5 : 3.4}
                   fill="#299cf0" stroke="#fff" strokeWidth="1.4" />
               ))}
@@ -703,7 +744,9 @@ function ConversionFootfallChart({ days, selectedDate, setSelectedDate }) {
               {series.map((day) => (
                 <g key={"interaction-" + day.date} role="button" tabIndex={0}
                   aria-label={dayLabel(day.date) + ": conversión " +
-                    formatHundredths(day.conversion, "%") + ", afluencia " + number(day.footfall)}
+                    formatHundredths(day.conversion, "%") + ", afluencia " + number(day.footfall) + " · " +
+                    "Conversión: " + dailyCoverageText(day, "conversion", branches) + " · " +
+                    "Afluencia: " + dailyCoverageText(day, "footfall", branches)}
                   onMouseEnter={() => setSelectedDate(day.date)}
                   onFocus={() => setSelectedDate(day.date)}
                   onClick={() => setSelectedDate(day.date)}
@@ -716,7 +759,9 @@ function ConversionFootfallChart({ days, selectedDate, setSelectedDate }) {
                   <rect x={day.x - stepX / 2} y={top} width={stepX}
                     height={chartHeight} fill="transparent" />
                   <title>{dayLabel(day.date) + " · " +
-                    formatHundredths(day.conversion, "%") + " · " + number(day.footfall)}</title>
+                    formatHundredths(day.conversion, "%") + " · " + number(day.footfall) + " · " +
+                    "Conversión: " + dailyCoverageText(day, "conversion", branches) + " · " +
+                    "Afluencia: " + dailyCoverageText(day, "footfall", branches)}</title>
                 </g>
               ))}
             </svg>
@@ -726,6 +771,8 @@ function ConversionFootfallChart({ days, selectedDate, setSelectedDate }) {
               <strong>{dayLabel(activeDay.date)}</strong>
               <span>Conversión: <b>{formatHundredths(activeDay.conversion, "%")}</b></span>
               <span>Afluencia: <b>{number(activeDay.footfall)}</b></span>
+              <div><b>Conversión</b><DailyCoverage day={activeDay} indicator="conversion" branches={branches} /></div>
+              <div><b>Afluencia</b><DailyCoverage day={activeDay} indicator="footfall" branches={branches} /></div>
             </div>
           )}
         </>
@@ -792,7 +839,7 @@ function Daily({ rows, branches, initialBranch }) {
       selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
   ) : (
     <DailySeries rows={scopedRows} indicator={indicator}
-      calendarDates={calendarDates} dailyData={series[0]?.days}
+      calendarDates={calendarDates} dailyData={series[0]?.days} branches={branches}
       selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
   );
   const toggleBranch = (id) => setSelectedBranches((current) =>
@@ -924,7 +971,7 @@ function Daily({ rows, branches, initialBranch }) {
       {!!selectedIds.length && (
         <div className="lr17-daily-paired" aria-label="Participación y tráfico de las sucursales seleccionadas">
           <SalesByBranchChart rows={scopedRows} branches={branches} selectedIds={selectedIds} />
-          <ConversionFootfallChart
+          <ConversionFootfallChart branches={branches}
             days={branchDailyMetrics(rows, calendarDates, selectedIds, "consolidated")[0]?.days || []}
             selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
         </div>
@@ -1363,7 +1410,7 @@ export default function LaRousseDashboard() {
               </div>
             )}
             {commercialMetrics(chartRows, []).commercial.length > 0 && (
-              <Daily key={month + ":" + branch} rows={commercialMetrics(chartRows, []).commercial}
+              <Daily key={month + ":" + branch} rows={chartRows}
                 branches={catalog} initialBranch={branch} />
             )}
             <CommercialComparison comparison={comparison} windows={windows}
