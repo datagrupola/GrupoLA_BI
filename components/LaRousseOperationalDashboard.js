@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-
 import { operationalMetrics } from "../lib/larousse-operational.mjs";
+import "./LaRousseOperationalDashboard.css";
 
+// Presentational layer only. The source contract, KPI definitions and authorization
+// remain in lib/larousse-operational.mjs and app/api/larousse/operational/route.js.
 const INCIDENT_NAMES = {
   APERTURA_TARDIA: "Apertura tardía",
   APERTURA_NO_REGISTRADA: "Apertura no registrada",
@@ -24,135 +26,135 @@ const todayMexico = () => {
 const currentMonth = () => todayMexico().slice(0, 7);
 const daysInMonth = (month) => new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5)), 0)).getUTCDate();
 const monthDates = (month) => {
-  const end = month === currentMonth()
-    ? Number(todayMexico().slice(-2))
-    : daysInMonth(month);
-  return Array.from({ length: end }, (_, i) => month + "-" + String(i + 1).padStart(2, "0"));
+  const end = month === currentMonth() ? Number(todayMexico().slice(-2)) : daysInMonth(month);
+  return Array.from({ length: end }, (_, i) => `${month}-${String(i + 1).padStart(2, "0")}`);
 };
-const dateShort = (date) => new Intl.DateTimeFormat("es-MX", {
+const shortDate = (date) => new Intl.DateTimeFormat("es-MX", {
   day: "numeric", month: "short", timeZone: "UTC",
 }).format(new Date(date + "T12:00:00Z"));
 const formatRate = (rate) => rate === null ? "No disponible" : rate.toLocaleString("es-MX", {
   minimumFractionDigits: 1, maximumFractionDigits: 1,
 }) + "%";
 
-function Metric({ label, value, note, tone = "regular" }) {
+function Kpi({ label, value, caption, variant = "neutral", kicker, children }) {
   return (
-    <article className={`op-metric op-metric-${tone}`}>
-      <span>{label}</span>
-      <strong>{value}</strong>
-      {note && <small>{note}</small>}
+    <article className={`opx-kpi opx-kpi--${variant}`}>
+      {kicker && <span className="opx-kpi-kicker">{kicker}</span>}
+      <h3>{label}</h3>
+      <div className="opx-kpi-value">{value}</div>
+      <p>{caption}</p>
+      {children}
     </article>
   );
 }
 
-function Trend({ title, values, dates, selected, onSelect, color, note }) {
-  const width = 860, top = 34, bottom = 194, left = 36, right = 838;
+function Trend({ title, description, values, dates, selected, onSelect, color, total }) {
+  const left = 35, right = 840, top = 24, bottom = 173;
   const max = Math.max(1, ...values);
   const step = (right - left) / Math.max(1, dates.length - 1);
-  const x = (i) => left + i * step;
+  const x = (index) => left + index * step;
   const y = (value) => bottom - (value / max) * (bottom - top);
-  const points = values.map((value, i) => `${x(i)},${y(value)}`).join(" ");
-  const current = Math.max(0, dates.indexOf(selected));
-  const active = values[current] ?? 0;
+  const coords = values.map((value, i) => `${x(i)},${y(value)}`).join(" ");
+  const index = Math.max(0, dates.indexOf(selected));
   return (
-    <section className="op-panel op-trend" aria-label={title}>
-      <div className="op-panel-top">
-        <div><h2>{title}</h2>{note && <p>{note}</p>}</div>
-        <div className="op-chart-selected"><strong>{formatNumber(active)}</strong><span>{dateShort(dates[current])}</span></div>
+    <section className="opx-panel opx-trend" aria-label={title}>
+      <div className="opx-panel-heading">
+        <div><h3>{title}</h3><p>{description}</p></div>
+        <div className="opx-chart-total" aria-label={`Total del mes ${total}`}>
+          <strong>{formatNumber(total)}</strong><span>Total mensual</span>
+        </div>
       </div>
-      <div className="op-chart-scroll">
-        <svg viewBox="0 0 860 226" className="op-chart" role="img" aria-label={`${title}; seleccionar un día para ver su valor`}>
-          {[0, .25, .5, .75, 1].map((n) => (
-            <g key={n}>
-              <line x1={left} y1={y(max * n)} x2={right} y2={y(max * n)} stroke="#e3eaf3" strokeDasharray="3 5"/>
-              <text x="5" y={y(max * n) + 4} fill="#7b8ba1" fontSize="10">{Math.round(max * n)}</text>
-            </g>
-          ))}
-          {values.length > 1 && <polyline points={points} fill="none" stroke={color} strokeWidth="3" strokeLinejoin="round" strokeLinecap="round"/>}
-          {dates.map((date, i) => (
-            <g key={date} role="button" tabIndex={0} aria-label={`${date}: ${values[i]}`}
-              onFocus={() => onSelect(date)} onMouseEnter={() => onSelect(date)}
-              onClick={() => onSelect(date)} onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(date); }
-              }}>
-              <rect x={Math.max(0, x(i) - step / 2)} y={top - 12} width={Math.max(7, step)} height={bottom - top + 28}
-                className="op-hit-zone"/>
-              {date === selected && <line x1={x(i)} x2={x(i)} y1={top - 12} y2={bottom + 16}
-                stroke="#91a8c6" strokeDasharray="4 4" strokeWidth="1.5" pointerEvents="none"/>}
-              <circle cx={x(i)} cy={y(values[i])} r={date === selected ? 5.5 : 2.7}
-                fill={date === selected ? color : "#fff"} stroke={color} strokeWidth="2" pointerEvents="none"/>
-            </g>
-          ))}
-          {dates.filter((_, i) => i === 0 || (i + 1) % 5 === 0 || i === dates.length - 1).map((date) => (
-            <text key={date} x={x(dates.indexOf(date))} y="219" textAnchor="middle"
-              fill="#73849b" fontSize="11">{Number(date.slice(-2))}</text>
-          ))}
-        </svg>
-      </div>
+      <div className="opx-active-day"><span>Fecha seleccionada: {shortDate(dates[index])}</span><strong>{formatNumber(values[index] ?? 0)} incidencias / eventos</strong></div>
+      <svg viewBox="0 0 880 208" className="opx-chart" role="img" aria-label={`${title}. Selecciona un día para consultar su valor.`}>
+        {[0, 0.25, 0.5, 0.75, 1].map((tick) => (
+          <g key={tick}>
+            <line x1={left} x2={right} y1={y(max * tick)} y2={y(max * tick)} stroke="#e5ebf2" strokeDasharray="4 5" />
+            <text x="6" y={y(max * tick) + 4} fontSize="11" fill="#64748b">{Math.round(max * tick)}</text>
+          </g>
+        ))}
+        {values.length > 1 && <polyline points={coords} fill="none" stroke={color} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>}
+        {dates.map((date, i) => (
+          <g key={date} tabIndex={0} role="button" aria-label={`${shortDate(date)}: ${values[i]}`}
+            onFocus={() => onSelect(date)} onMouseEnter={() => onSelect(date)} onClick={() => onSelect(date)}
+            onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(date); } }}>
+            <rect className="opx-hit-area" x={Math.max(0, x(i) - step / 2)} y={top - 12}
+              width={Math.max(9, step)} height={bottom - top + 28} />
+            {date === selected && <line x1={x(i)} x2={x(i)} y1={top - 12} y2={bottom + 14}
+              stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="4 4" pointerEvents="none" />}
+            <circle cx={x(i)} cy={y(values[i])} r={date === selected ? 5.4 : 2.9}
+              fill={date === selected ? color : "#fff"} stroke={color} strokeWidth="2" pointerEvents="none" />
+          </g>
+        ))}
+        {dates.filter((_, i) => i === 0 || (i + 1) % 5 === 0 || i === dates.length - 1).map((date) => (
+          <text key={date} x={x(dates.indexOf(date))} y="203" fill="#64748b" textAnchor="middle" fontSize="11">{Number(date.slice(-2))}</text>
+        ))}
+      </svg>
     </section>
   );
 }
 
 function IncidentBreakdown({ rows }) {
-  const list = Object.entries(rows.reduce((acc, row) => {
+  const sorted = Object.entries(rows.reduce((acc, row) => {
     acc[row.type] = (acc[row.type] || 0) + row.count;
     return acc;
   }, {})).sort((a, b) => b[1] - a[1]);
-  const maximum = Math.max(1, ...list.map(([, count]) => count));
+  const total = sorted.reduce((sum, [, count]) => sum + count, 0);
+  const max = Math.max(1, ...sorted.map(([, count]) => count));
   return (
-    <section className="op-panel" aria-label="Incidencias por tipo">
-      <div className="op-panel-top"><h2>Incidencias por tipo</h2></div>
-      {list.length ? <div className="op-type-list">
-        {list.map(([type, count]) => (
-          <div key={type} className="op-type-item">
-            <div><span>{INCIDENT_NAMES[type] || type.replaceAll("_", " ")}</span><strong>{formatNumber(count)}</strong></div>
-            <div className="op-type-track"><span style={{ width: ((count / maximum) * 100) + "%" }} /></div>
-          </div>
-        ))}
-      </div> : <p className="op-no-data">Sin incidencias registradas para la selección.</p>}
+    <section className="opx-panel" aria-label="Incidencias por tipo">
+      <div className="opx-panel-heading"><div><h3>Incidencias por tipo</h3><p>Composición completa del total C1, incluidas apertura y cierre.</p></div></div>
+      {sorted.length ? <div className="opx-types">
+        {sorted.map(([type, count]) => <div className="opx-type" key={type}>
+          <div className="opx-type-head"><span>{INCIDENT_NAMES[type] || type.replaceAll("_", " ")}</span><b>{formatNumber(count)} <small>({Math.round(count / total * 100)}%)</small></b></div>
+          <div className="opx-track"><i style={{ width: `${(count / max) * 100}%` }} /></div>
+        </div>)}
+      </div> : <p className="opx-empty">Sin incidencias registradas para la selección.</p>}
     </section>
   );
 }
 
 function BranchRanking({ data, selection }) {
-  const items = data.branches.filter((b) => !selection || b.id === selection).map((branch) => {
-    const incidents = data.incident_daily.filter((r) => r.branch_id === branch.id)
+  const [order, setOrder] = useState("incidents");
+  const rows = useMemo(() => data.branches.filter((b) => !selection || b.id === selection).map((branch) => {
+    const incidents = data.incident_daily.filter((row) => row.branch_id === branch.id)
       .reduce((sum, row) => sum + row.count, 0);
-    const tasks = data.task_monthly.find((row) => row.branch_id === branch.id);
+    const cycles = data.task_monthly.find((row) => row.branch_id === branch.id);
     return {
-      ...branch, incidents, missedTasks: tasks?.missed_tasks || 0,
-      missedCycles: tasks?.missed_cycles || 0,
-      onTime: tasks?.on_time_cycles || 0,
+      ...branch, incidents, missedTasks: cycles?.missed_tasks || 0,
+      missedCycles: cycles?.missed_cycles || 0, onTime: cycles?.on_time_cycles || 0,
     };
-  }).sort((a, b) => b.incidents - a.incidents || b.missedTasks - a.missedTasks || a.name.localeCompare(b.name));
+  }).sort((a, b) => order === "tasks"
+    ? b.missedTasks - a.missedTasks || b.incidents - a.incidents || a.name.localeCompare(b.name)
+    : b.incidents - a.incidents || b.missedTasks - a.missedTasks || a.name.localeCompare(b.name)), [data, selection, order]);
+  const most = rows.length > 1 ? rows[0] : null;
+  const least = rows.length > 1 ? [...rows].sort((a, b) => a.incidents - b.incidents || a.missedTasks - b.missedTasks)[0] : null;
   return (
-    <section className="op-panel op-ranking" aria-label="Comparación por sucursal">
-      <div className="op-panel-top">
-        <div><h2>Desempeño por sucursal</h2><p>Incidencias persistidas y vencimientos históricos del mes.</p></div>
+    <section className="opx-panel opx-ranking" aria-label="Comparación por sucursal">
+      <div className="opx-panel-heading">
+        <div><h3>Desempeño por sucursal</h3><p>Volumen de incidencias y tareas vencidas; no es una tasa de cumplimiento.</p></div>
+        <label className="opx-order">Ordenar por
+          <select value={order} onChange={(event) => setOrder(event.target.value)} aria-label="Orden de sucursales">
+            <option value="incidents">Incidencias C1</option><option value="tasks">Tareas vencidas</option>
+          </select>
+        </label>
       </div>
-      <div className="op-table-scroll">
-        <table className="op-table">
-          <thead><tr>
-            <th scope="col">Sucursal</th><th scope="col">Incidencias C1</th>
-            <th scope="col">Tareas vencidas</th><th scope="col">Ciclos vencidos</th>
-            <th scope="col">Ciclos a tiempo</th><th scope="col">Seguimiento</th>
-          </tr></thead>
-          <tbody>{items.map((b) => (
-            <tr key={b.id}>
-              <th scope="row">{b.name}</th>
-              <td>{formatNumber(b.incidents)}</td><td>{formatNumber(b.missedTasks)}</td>
-              <td>{formatNumber(b.missedCycles)}</td><td>{formatNumber(b.onTime)}</td>
-              <td><span className={`op-followup ${b.incidents >= 10 || b.missedTasks >= 1 ? "op-followup-alert" : ""}`}>
-                {b.incidents >= 20 ? "C1 ≥ 20" : b.incidents >= 15 ? "C1 ≥ 15" :
-                  b.incidents >= 10 ? "C1 ≥ 10" : b.missedTasks >= 2 ? "C2 ≥ 2" :
-                  b.missedTasks >= 1 ? "C2 ≥ 1" : "Sin umbral"}
-              </span></td>
-            </tr>
-          ))}</tbody>
-        </table>
-      </div>
-      <p className="op-footnote">Umbrales de seguimiento, no descuentos ni actas automáticas. Las decisiones corresponden a Dirección.</p>
+      {most && order === "incidents" && <div className="opx-compare-pair">
+        <div><span>Mayor volumen C1</span><strong>{most.name}</strong><b>{formatNumber(most.incidents)}</b></div>
+        <div><span>Menor volumen C1</span><strong>{least.name}</strong><b>{formatNumber(least.incidents)}</b></div>
+      </div>}
+      <div className="opx-table-scroll"><table className="opx-table">
+        <thead><tr><th scope="col">Sucursal</th><th scope="col">Incidencias C1</th><th scope="col">Tareas vencidas</th><th scope="col">Ciclos vencidos</th><th scope="col">Ciclos a tiempo</th><th scope="col">Seguimiento</th></tr></thead>
+        <tbody>{rows.map((row) => <tr key={row.id}>
+          <th scope="row">{row.name}</th><td>{formatNumber(row.incidents)}</td><td>{formatNumber(row.missedTasks)}</td>
+          <td>{formatNumber(row.missedCycles)}</td><td>{formatNumber(row.onTime)}</td>
+          <td><span className="opx-tags">
+            {row.incidents >= 10 && <span className="opx-tag opx-tag--watch">C1 ≥ {row.incidents >= 20 ? 20 : row.incidents >= 15 ? 15 : 10}</span>}
+            {row.missedTasks >= 1 && <span className="opx-tag opx-tag--watch">C2 ≥ {row.missedTasks >= 2 ? 2 : 1}</span>}
+            {row.incidents < 10 && row.missedTasks === 0 && <span className="opx-tag">Sin umbral</span>}
+          </span></td>
+        </tr>)}</tbody>
+      </table></div>
+      <p className="opx-fineprint">Los umbrales son señales de seguimiento; no aplican descuentos, actas ni sanciones automáticamente. Mayor/menor volumen no implica desempeño relativo: no incluye el denominador de actividades esperadas.</p>
     </section>
   );
 }
@@ -177,13 +179,8 @@ export default function LaRousseOperationalDashboard() {
         const payload = await response.json();
         if (!controller.signal.aborted) { setData(payload); setError(""); }
       } catch (problem) {
-        if (!controller.signal.aborted) {
-          setError(problem.message || "Error de lectura operativa");
-          setData(null);
-        }
-      } finally {
-        if (!controller.signal.aborted) setLoading(false);
-      }
+        if (!controller.signal.aborted) { setError(problem.message || "Error de lectura operativa"); setData(null); }
+      } finally { if (!controller.signal.aborted) setLoading(false); }
     }
     load();
     return () => controller.abort();
@@ -205,69 +202,87 @@ export default function LaRousseOperationalDashboard() {
   const dates = monthDates(month);
   const focus = hoveredDate && dates.includes(hoveredDate) ? hoveredDate : dates.at(-1);
   const incidentsByDay = dates.map((date) => (scoped?.incident_daily || [])
-    .filter((row) => row.date === date).reduce((s, row) => s + row.count, 0));
+    .filter((row) => row.date === date).reduce((sum, row) => sum + row.count, 0));
   const missedByDay = dates.map((date) => (scoped?.task_cycle_daily || [])
-    .filter((row) => row.date === date).reduce((s, row) => s + row.missed_tasks, 0));
-
+    .filter((row) => row.date === date).reduce((sum, row) => sum + row.missed_tasks, 0));
+  const includesUnknown = !!metrics?.unknown;
+  const noEvaluableDeadlines = !!metrics && !metrics.unknown && !metrics.missedCycles &&
+    !scoped.task_monthly.some((row) => row.on_time_cycles > 0);
+  const branchTitle = branch ? data?.branches.find((row) => row.id === branch)?.name : "Todas las sucursales La Rousse";
   return (
-    <div className="lr2 op-dashboard">
-      <header className="lr2-header op-header">
-        <div><div className="lr2-eyebrow">LA ROUSSE · OPERACIONES</div><h1>Ritmo y cumplimiento</h1></div>
-        <div className="lr2-controls">
-          <label><span>Mes</span><input type="month" aria-label="Mes operativo"
-            value={month} onChange={(event) => {
-              if (event.target.value) { setMonth(event.target.value); setLoading(true); setHoveredDate(null); }
-            }}/></label>
-          <label><span>Sucursal</span><select aria-label="Sucursal operativa" value={branch}
-            onChange={(event) => setBranch(event.target.value)}>
+    <div className="lr2 op-dashboard opx-dashboard">
+      <header className="opx-header">
+        <div className="opx-title"><span className="opx-eyebrow">LA ROUSSE · INTELIGENCIA OPERATIVA</span>
+          <h1>Resumen ejecutivo</h1><p>Ritmo Diario y tareas ad hoc · Información mensual desde La Rousse Ops</p>
+        </div>
+        <div className="opx-controls">
+          <label>Mes <input aria-label="Mes operativo" type="month" value={month} onChange={(event) => {
+            if (event.target.value) { setMonth(event.target.value); setLoading(true); setHoveredDate(null); }
+          }} /></label>
+          <label>Sucursal<select aria-label="Sucursal operativa" value={branch} onChange={(event) => setBranch(event.target.value)}>
             <option value="">Todas las sucursales</option>
-            {(data?.branches || []).map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+            {(data?.branches || []).map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}
           </select></label>
-          <button type="button" onClick={() => { setLoading(true); setReload((x) => x + 1); }}>Actualizar</button>
+          <button type="button" onClick={() => { setLoading(true); setReload((value) => value + 1); }}>Actualizar</button>
         </div>
       </header>
       {loading ? <div className="lr2-loading" role="status">Consultando indicadores operativos…</div> :
-        error ? <div className="lr2-loading lr2-error" role="alert">
-          {error} <button onClick={() => { setLoading(true); setReload((x) => x + 1); }}>Reintentar</button>
+        error ? <div className="lr2-loading lr2-error" role="alert">{error}
+          <button type="button" onClick={() => { setLoading(true); setReload((value) => value + 1); }}>Reintentar</button>
         </div> : scoped && metrics ? <>
-          <div className="lr2-updated"><span className="lr2-live-dot" aria-hidden="true" />
-            Información consultada {new Date(data.queried_at).toLocaleString("es-MX", { timeZone: "America/Mexico_City" })}
-            {month === currentMonth() ? " · Mes en curso" : ""}
-          </div>
-          <section className="op-kpis" aria-label="Indicadores ejecutivos">
-            <Metric label="Incidencias · Ritmo Diario" value={formatNumber(metrics.incidents)}
-              note="Hechos persistidos en el período" tone="primary" />
-            <Metric label="Tareas vencidas · Ad hoc" value={formatNumber(metrics.missedTasks)}
-              note="Tareas distintas con vencimiento histórico" tone="danger"/>
-            <Metric label="Ciclos vencidos" value={formatNumber(metrics.missedCycles)}
-              note="Una tarea puede tener varios ciclos"/>
-            <Metric label="Puntualidad · Ad hoc" value={formatRate(metrics.onTimeRate)}
-              note={metrics.unknown ? "Existen ciclos sin calificación" : "Ciclos entregados en plazo / evaluados"}/>
-          </section>
-          <section className="op-secondary-kpis" aria-label="Flujo de tareas">
-            <Metric label="Asignadas" value={formatNumber(metrics.assigned)} />
-            <Metric label="Aprobadas" value={formatNumber(metrics.approved)} />
-            <Metric label="Reabiertas" value={formatNumber(metrics.reopened)} />
-          </section>
-          <section className="op-trend-grid" aria-label="Evolución diaria">
-            <Trend title="Incidencias de Ritmo Diario" values={incidentsByDay} dates={dates}
-              selected={focus} onSelect={setHoveredDate} color="#bf4652"
-              note="Por FechaOperativa; incluye faltantes materializados."/>
-            <Trend title="Tareas vencidas por día" values={missedByDay} dates={dates}
-              selected={focus} onSelect={setHoveredDate} color="#245da0"
-              note="Tareas distintas por fecha de deadline en México."/>
-          </section>
-          <section className="op-detail-grid">
-            <IncidentBreakdown rows={scoped.incident_daily}/>
-            <div className="op-panel op-explanation">
-              <h2>Cómo leer este tablero</h2>
-              <p>Una incidencia C1 es un hecho registrado. Las tareas vencidas se calculan desde ciclos históricos, aunque hoy estén reabiertas.</p>
-              <p>La suma de tareas vencidas por día puede superar el total mensual, porque una tarea puede vencer en dos fechas distintas.</p>
-              <p>El porcentaje de cumplimiento de actividades de Ritmo Diario se incorporará únicamente cuando esté disponible el denominador histórico verificado.</p>
+          <div className="opx-context"><div><span className="opx-status-dot" aria-hidden="true" />
+            <strong>{branchTitle}</strong><span> · {month === currentMonth() ? "Mes en curso" : "Mes cerrado"}</span>
+          </div><span>Actualizado: {new Date(data.queried_at).toLocaleString("es-MX", { timeZone: "America/Mexico_City" })}</span></div>
+          <section className="opx-section" aria-labelledby="opx-summary-title">
+            <div className="opx-section-title"><div><span>01 · PANORAMA GENERAL</span><h2 id="opx-summary-title">Indicadores que requieren atención</h2></div><p>Lectura mensual · sin comparativo de periodos personalizados</p></div>
+            <div className="opx-hero-grid" aria-label="Indicadores ejecutivos">
+              <Kpi label="Incidencias · Ritmo Diario" value={formatNumber(metrics.incidents)}
+                caption="Total de incidencias C1; incluye apertura, cierre y actividades." kicker="CARRIL 1" variant="primary" />
+              <Kpi label="Tareas vencidas · Ad hoc" value={formatNumber(metrics.missedTasks)}
+                caption={noEvaluableDeadlines ? "No hubo ciclos con plazo evaluable: cero no equivale a cumplimiento." : "Tareas distintas con vencimiento histórico."}
+                kicker="CARRIL 2" variant={metrics.missedTasks ? "alert" : "neutral"} />
+              <Kpi label="Puntualidad · Ad hoc" value={formatRate(metrics.onTimeRate)}
+                caption={includesUnknown ? "Existen ciclos sin calificación: porcentaje no verificable." : noEvaluableDeadlines ? "Sin ciclos evaluables en el mes." : "Entregas a tiempo entre ciclos evaluados."}
+                kicker="CALIDAD DE ENTREGA" variant="neutral" />
+              <Kpi label="Ciclos vencidos" value={formatNumber(metrics.missedCycles)}
+                caption="Una misma tarea puede registrar varios ciclos." kicker="HISTÓRICO" variant="neutral" />
+            </div>
+            <div className="opx-flow-strip" aria-label="Flujo de tareas ad hoc">
+              <div><span>Asignadas</span><strong>{formatNumber(metrics.assigned)}</strong></div>
+              <div><span>Aprobadas</span><strong>{formatNumber(metrics.approved)}</strong></div>
+              <div><span>Reabiertas</span><strong>{formatNumber(metrics.reopened)}</strong></div>
+              <p>Eventos del mes; las cantidades no representan una misma cohorte de tareas.</p>
             </div>
           </section>
-          <BranchRanking data={scoped} selection={branch}/>
-          <footer className="op-footer">Grupo LA BI · La Rousse · Fuente operativa: La Rousse Ops · Solo lectura</footer>
+          <section className="opx-section" aria-labelledby="opx-trend-title">
+            <div className="opx-section-title"><div><span>02 · EVOLUCIÓN</span><h2 id="opx-trend-title">¿Cuándo ocurrieron las incidencias?</h2></div></div>
+            <div className="opx-two-col">
+              <Trend title="Incidencias de Ritmo Diario" description="Por FechaOperativa; incluye los faltantes persistidos."
+                values={incidentsByDay} dates={dates} selected={focus} onSelect={setHoveredDate}
+                color="#bc4958" total={metrics.incidents} />
+              <Trend title="Tareas vencidas por día" description="Tareas distintas según fecha límite en México."
+                values={missedByDay} dates={dates} selected={focus} onSelect={setHoveredDate}
+                color="#2b699d" total={metrics.missedTasks} />
+            </div>
+          </section>
+          <section className="opx-section" aria-labelledby="opx-diagnostic-title">
+            <div className="opx-section-title"><div><span>03 · DIAGNÓSTICO</span><h2 id="opx-diagnostic-title">¿Qué está provocando las incidencias?</h2></div></div>
+            <div className="opx-detail-layout">
+              <IncidentBreakdown rows={scoped.incident_daily} />
+              <aside className="opx-panel opx-reading" aria-label="Cómo interpretar el resumen">
+                <h3>Lectura para Dirección</h3>
+                <p><strong>Ritmo Diario:</strong> el total incluye todas las incidencias C1. Las actividades no registradas y fuera de tiempo son solo una parte de ese total.</p>
+                <p><strong>Ad hoc:</strong> una tarea vencida se contabiliza por su histórico, incluso si fue reabierta o cambió de estado posteriormente.</p>
+                <p><strong>Cero vencidas:</strong> revisar la existencia de plazos evaluables antes de interpretar el resultado como buen desempeño.</p>
+                <p><strong>Cumplimiento de actividades de Ritmo Diario:</strong> no se muestra un porcentaje hasta contar con el denominador histórico verificado.</p>
+              </aside>
+            </div>
+          </section>
+          <section className="opx-section" aria-labelledby="opx-branch-title">
+            <div className="opx-section-title"><div><span>04 · SUCURSALES</span><h2 id="opx-branch-title">¿Dónde concentrar el seguimiento?</h2></div></div>
+            <BranchRanking data={scoped} selection={branch} />
+          </section>
+          <footer className="opx-footer">Grupo LA BI · La Rousse · Fuente: La Rousse Ops · Consulta de solo lectura · Sin ejecución de incentivos o sanciones</footer>
         </> : null}
     </div>
   );
