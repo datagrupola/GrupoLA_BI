@@ -77,12 +77,14 @@ test("measured zero stays zero, but zero denominators never fabricate ratios", (
   for (const key of ["net", "tickets", "footfall", "pieces"]) assert.equal(day[key], 0n);
   for (const key of ["conversion", "piecesPerTicket"]) {
     assert.equal(day[key], null);
-    assert.equal(day.coverage[key].known, 0);
-    assert.deepEqual(day.coverage[key].zeroDenominatorIds, [ids[0]]);
+    assert.equal(day.coverage[key].known, 1);
+    assert.deepEqual(day.coverage[key].includedIds, [ids[0]]);
+    assert.equal(day.coverage[key].zeroDenominator, true);
   }
   const mixed = daysFor([row(ids[0], dates[0], { footfall: "0" }), row(ids[1])])[0].days[0];
-  assert.equal(mixed.conversion, 2000n);
-  assert.deepEqual(mixed.coverage.conversion.includedIds, [ids[1]]);
+  assert.equal(mixed.conversion, 4000n);
+  assert.deepEqual(mixed.coverage.conversion.includedIds, ids.slice(0, 2));
+  assert.equal(mixed.coverage.conversion.zeroDenominator, false);
 });
 
 test("selection determines denominator; comparison isolates missing branches", () => {
@@ -130,4 +132,64 @@ test("a cut can exist without a usable indicator; wholly invalid data never beco
     assert.equal(day.coverage[key].known, 0);
     assert.deepEqual(day.coverage[key].invalidIds, [ids[0]]);
   }
+});
+
+
+test("R01 A: eight complete cuts retain 8/8 coverage with measured zero activity", () => {
+  const rows = ids.map((id, index) => row(id, dates[0], index === 0
+    ? { net_sales: "0.00", tickets: "0", pieces: "0", footfall: "0" } : {}));
+  const day = daysFor(rows)[0].days[0];
+  assert.deepEqual(day.cuts.missingIds, []);
+  for (const metric of metrics) {
+    assert.equal(day.coverage[metric].known, 8, metric);
+    assert.equal(day.coverage[metric].complete, true, metric);
+    assert.deepEqual(day.coverage[metric].includedIds, ids, metric);
+  }
+  assert.equal(day.complete, true);
+  assert.equal(day.conversion, 2000n);
+  assert.equal(day.piecesPerTicket, 300n);
+});
+
+test("R01 B: consolidated ratios include valid individual zero denominators", () => {
+  const day = daysFor([
+    row("CAMELINAS", dates[0], { pieces: "4", tickets: "0" }),
+    row("CENTRO", dates[0], { pieces: "6", tickets: "2" }),
+  ], ["CAMELINAS", "CENTRO"])[0].days[0];
+  assert.equal(day.piecesPerTicket, 500n); // (4 + 6) / (0 + 2) = 5.00.
+  assert.equal(day.coverage.piecesPerTicket.known, 2);
+  assert.equal(day.coverage.piecesPerTicket.complete, true);
+  const conversion = daysFor([
+    row("CAMELINAS", dates[0], { tickets: "2", footfall: "0" }),
+    row("CENTRO", dates[0], { tickets: "2", footfall: "10" }),
+  ], ["CAMELINAS", "CENTRO"])[0].days[0];
+  assert.equal(conversion.conversion, 4000n); // (2 + 2) / (0 + 10) = 40.00%.
+  assert.equal(conversion.coverage.conversion.known, 2);
+});
+
+test("R01 C: a zero consolidated denominator keeps complete measured coverage", () => {
+  const day = daysFor(ids.map(id => row(id, dates[0], { tickets: "0", pieces: "4" })))[0].days[0];
+  assert.equal(day.piecesPerTicket, null);
+  assert.equal(day.tickets, 0n);
+  assert.equal(day.pieces, 32n);
+  assert.equal(day.coverage.piecesPerTicket.known, 8);
+  assert.equal(day.coverage.piecesPerTicket.complete, true);
+  assert.equal(day.coverage.piecesPerTicket.zeroDenominator, true);
+  assert.deepEqual(day.cuts.missingIds, []);
+  assert.equal(day.conversion, 0n);
+});
+
+test("R01: comparison preserves zero cuts without borrowing another branch denominator", () => {
+  const series = daysFor([
+    row("CAMELINAS", dates[0], { pieces: "4", tickets: "0", footfall: "0" }),
+    row("CENTRO", dates[0]),
+  ], ["CAMELINAS", "CENTRO"], "comparison");
+  const zero = series[0].days[0];
+  assert.equal(zero.piecesPerTicket, null);
+  assert.equal(zero.conversion, null);
+  for (const metric of metrics) {
+    assert.equal(zero.coverage[metric].known, 1, metric);
+    assert.equal(zero.coverage[metric].complete, true, metric);
+  }
+  assert.equal(series[1].days[0].piecesPerTicket, 300n);
+  assert.equal(series[1].days[0].conversion, 2000n);
 });

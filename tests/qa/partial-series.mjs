@@ -34,6 +34,13 @@ const rows = [
   row(ids[2], "16", { tickets: "0", state: "CORRECTION_REQUESTED" }),
   row(ids[3], "16", { state: "CANCELLED" }),
   row("BBVA", "12", { source_kind: "APPSHEET", historical: true, net_sales: null }),
+  // R01 A: all eight measured cuts, including a branch with zero activity.
+  ...ids.map((id, index) => row(id, "17", index === 0
+    ? { net_sales: "0.00", tickets: "0", pieces: "0", footfall: "0" } : {})),
+  // R01 B: (4 + 6) / (0 + 2) = 5.00, with both cuts included.
+  row(ids[0], "18", { pieces: "4", tickets: "0" }), row(ids[1], "18"),
+  // R01 C: all tickets sum to zero, while all eight cuts are complete.
+  ...ids.map(id => row(id, "19", { tickets: "0", pieces: "4" })),
 ];
 try {
   for (let i = 0; i < 100; i++) {
@@ -76,17 +83,17 @@ try {
     await select(main, 12);
     assert.match(await main.innerText(), /\$700\.00/);
     assert.match(await main.innerText(), /Cobertura: 7\/8.*Consolidado parcial.*Falta corte: BBVA/s);
-    assert.equal(await main.locator("circle.lr19-partial").count(), 4);
+    assert.equal(await main.locator("circle.lr19-partial").count(), 5);
     // The first segment contains 11, 12, 13 and 14; no fake point on 15.
     assert.equal((await main.locator("polyline").first().getAttribute("points")).split(" ").length, 4);
-    assert.equal(await main.locator("circle").count(), 5);
+    assert.equal(await main.locator("circle").count(), 8);
     await main.scrollIntoViewIfNeeded();
     await page.screenshot({ path: `${output}/${mobile ? "mobile" : "desktop"}-7-of-8.png` });
     await combo.scrollIntoViewIfNeeded();
     await select(combo, 12);
     assert.match(await combo.innerText(), /20\.00%/);
     assert.match(await combo.innerText(), /Cobertura: 7\/8.*Falta corte: BBVA/s);
-    assert.equal(await combo.locator(".lr19-partial-bar").count(), 4);
+    assert.equal(await combo.locator(".lr19-partial-bar").count(), 5);
     await page.screenshot({ path: `${output}/${mobile ? "mobile" : "desktop"}-combo.png` });
     await select(main, 14);
     assert.match(await main.innerText(), /Cobertura: 1\/8.*CENTRO, LAZARO, PEPSI, TORRE, PLAZA, NORTE, BBVA/s);
@@ -99,7 +106,8 @@ try {
     await daily.getByRole("tab", { name: "Conversión", exact: true }).click();
     assert.match(await main.innerText(), /Cobertura: 1\/8.*Datos insuficientes para este indicador: CENTRO/s);
     await daily.getByRole("tab", { name: "Piezas por ticket", exact: true }).click();
-    assert.match(await main.innerText(), /Denominador cero \(excluido\): LAZARO/);
+    assert.match(await main.innerText(), /6\.00.*Cobertura: 2\/8/s);
+    assert.doesNotMatch(await main.innerText(), /Denominador cero \(excluido\)/);
     for (const label of ["Tickets", "Piezas vendidas", "Afluencia", "Ventas"]) {
       await daily.getByRole("tab", { name: label, exact: true }).click();
       await select(main, 12);
@@ -120,10 +128,63 @@ try {
     assert.match(await main.locator(".lr11-legend-item").last().innerText(), /Falta corte: BBVA/);
     await main.scrollIntoViewIfNeeded();
     await page.screenshot({ path: `${output}/${mobile ? "mobile" : "desktop"}-comparison.png` });
+    const chooseBranches = async (selection) => {
+      await daily.locator(".lr12-branch-trigger").click();
+      if (selection === "all") {
+        await daily.getByRole("button", { name: "Seleccionar todas las sucursales" }).click();
+      } else {
+        await daily.getByRole("button", { name: "Limpiar", exact: true }).click();
+        for (const name of selection)
+          await daily.getByRole("checkbox", { name, exact: true }).check();
+      }
+      await page.keyboard.press("Escape");
+    };
+    await chooseBranches("all");
+    await daily.getByRole("button", { name: "Consolidado", exact: true }).click();
+    await daily.getByRole("tab", { name: "Piezas por ticket", exact: true }).click();
+    await select(main, 17);
+    assert.match(await main.innerText(), /3\.00.*Cobertura: 8\/8.*Cobertura completa/s);
+    assert.doesNotMatch(await main.innerText(), /Falta corte|Consolidado parcial|excluido/);
+    assert.equal(await main.locator("circle.lr6-dot-active.lr19-partial").count(), 0);
+    await daily.getByRole("tab", { name: "Conversión", exact: true }).click();
+    assert.match(await main.innerText(), /20\.00%.*Cobertura: 8\/8/s);
+    await select(combo, 17);
+    assert.match(await combo.innerText(), /20\.00%.*Afluencia:.*70.*Cobertura: 8\/8/s);
+    assert.doesNotMatch(await combo.innerText(), /Falta corte|Consolidado parcial|excluido/);
+    await combo.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `${output}/${mobile ? "mobile" : "desktop"}-r01-A-combo.png` });
+
+    await chooseBranches(["CAMELINAS", "CENTRO"]);
+    await daily.getByRole("tab", { name: "Piezas por ticket", exact: true }).click();
+    await select(main, 18);
+    assert.match(await main.innerText(), /5\.00.*Cobertura: 2\/2.*Cobertura completa/s);
+    assert.doesNotMatch(await main.innerText(), /Falta corte|Consolidado parcial|excluido/);
+    await main.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `${output}/${mobile ? "mobile" : "desktop"}-r01-B-ratio.png` });
+    await daily.getByRole("button", { name: "Comparativo", exact: true }).click();
+    const firstBranch = main.locator(".lr11-legend-item").first();
+    assert.match(await firstBranch.innerText(), /CAMELINAS.*No disponible.*Cobertura: 1\/1.*Denominador consolidado cero/s);
+    assert.match(await main.locator(".lr11-legend-item").last().innerText(), /CENTRO.*3\.00.*Cobertura: 1\/1/s);
+
+    await chooseBranches("all");
+    await daily.getByRole("button", { name: "Consolidado", exact: true }).click();
+    await target(main, 19).focus();
+    await page.keyboard.press("Enter");
+    assert.match(await main.innerText(), /No disponible.*Cobertura: 8\/8.*Denominador consolidado cero/s);
+    assert.doesNotMatch(await main.innerText(), /Falta corte|Consolidado parcial|excluido/);
+    await main.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `${output}/${mobile ? "mobile" : "desktop"}-r01-C-zero-total.png` });
+    await select(combo, 19);
+    assert.match(await combo.innerText(), /0\.00%.*Afluencia:.*80.*Cobertura: 8\/8/s);
+    await daily.getByRole("button", { name: "Comparativo", exact: true }).click();
+    for (const item of await main.locator(".lr11-legend-item").all()) {
+      assert.match(await item.innerText(), /No disponible.*Cobertura: 1\/1.*Denominador consolidado cero/s);
+      assert.doesNotMatch(await item.innerText(), /Falta corte|Consolidado parcial|excluido/);
+    }
     assert.deepEqual(errors, []);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     checks.push({ viewport: mobile ? "390x844 touch" : "1440x1000 mouse", passed: true,
-      checks: ["8/8", "7/8 BBVA", "1/8 names", "0/8 absence", "duplicate", "pending/correction", "metric-specific missing", "zero denominator", "six metrics", "continuous partial line", "combo", "2/3 selection", "comparison", "keyboard focus/tab/enter", "no console errors", "no viewport overflow"] });
+      checks: ["8/8", "7/8 BBVA", "1/8 names", "0/8 absence", "duplicate", "pending/correction", "metric-specific missing", "zero denominator", "six metrics", "continuous partial line", "combo", "2/3 selection", "comparison", "keyboard focus/tab/enter", "no console errors", "no viewport overflow", "R01 A zero activity 8/8", "R01 B sum ratio 5.00", "R01 C zero total denominator retains 8/8", "R01 comparison zero cut retains 1/1"] });
     await context.close();
   }
   await writeFile(`${output}/results.json`, JSON.stringify(checks, null, 2));

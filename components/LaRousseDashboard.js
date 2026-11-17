@@ -182,10 +182,11 @@ function dailyCoverageText(day, indicator, branches) {
     ["Estado no reportable (excluido)", day.cuts.unreportableIds],
     ["Datos insuficientes para este indicador", coverage.insufficientIds],
     ["Datos inválidos para este indicador", coverage.invalidIds],
-    ["Denominador cero (excluido)", coverage.zeroDenominatorIds],
     ["Pendiente de revisión", day.cuts.pendingIds],
     ["Requiere corrección", day.cuts.correctionIds],
   ]) if (ids.length) parts.push(label + ": " + list(ids));
+  if (coverage.zeroDenominator)
+    parts.push("Denominador consolidado cero: razón no disponible");
   return parts.join(" · ");
 }
 function DailyCoverage({ day, indicator, branches }) {
