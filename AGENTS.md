@@ -15,8 +15,10 @@ Estas reglas rigen el desarrollo del dashboard BI de Grupo LA en `datagrupola/Gr
 
 ## Costos y compilaciones de documentación
 
-- El 17-nov-2026 el conector Vercel aceptó configurar **Ignored Build Step** para omitir builds cuando todos los cambios se limiten a `docs/**`, `AGENTS.md`, `.agents/**` o `.codex/**`; las modificaciones fuera de esas rutas deben permitir build.
+- El 17-nov-2026 el conector Vercel aceptó configurar **Ignored Build Step** para omitir builds cuando todos los cambios se limiten a `docs/**`, `AGENTS.md`, `.agents/**` o `.codex/**`; los cambios detectados fuera de esas rutas deben permitir build.
 - La configuración está en Vercel, no en este archivo. El comando utiliza `VERCEL_GIT_PREVIOUS_SHA` cuando está disponible o, en su ausencia, `HEAD^` como referencia local; no calcula el merge-base de `main`. Si el commit de referencia falta o la comparación falla, permite el build (fail-open).
+- **Limitación del filtro:** si falta `VERCEL_GIT_PREVIOUS_SHA`, el fallback `HEAD^` puede comparar únicamente el último commit, sin considerar cambios de código anteriores en el mismo PR. Una comparación incremental contra un SHA previo tampoco certifica el diff completo. Por eso, antes de cualquier liberación, revisar todos los commits desde la base del PR y exigir build y validación autorizados cuando existan cambios funcionales sin compilación efectiva; una omisión no es garantía de que el candidato sea exclusivamente documental.
+- **Evidencia acotada (17-nov-2026):** el deployment `dpl_8PuQ1QALid855ZR81zLPrfuTnBoY` del HEAD `ebbfe4703ebcfc6a280ee7fd47743b75c9ab3d4e` fue cancelado porque el Ignored Build Step devolvió 0. Prueba esa omisión particular, no asegura futuras omisiones ni elimina el riesgo de comparación parcial.
 - **No asumir ahorro sin comprobar el evento real.** Verificar el efecto de GitHub/Vercel y obtener autorización explícita antes de activar consumos adicionales. No cambiar configuraciones externas en un PR documental sin autorización independiente.
 
 ## Auditoría de este protocolo
