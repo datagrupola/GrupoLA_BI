@@ -92,15 +92,19 @@ test("forecast summarizes missing branch-day cuts in legible concise language", 
   assert.match(css, /\.lr8-forecast-support \{ align-self:stretch; width:100%/);
 });
 
-test("Branch performance labels reported distinct cut dates against the global calendar day", () => {
-  assert.match(src, /function branchCutCoverage\(projection\)/);
-  assert.match(src, /projection\.countedPairs \+ "\/" \+ projection\.cutoffDay/);
-  assert.match(src, /<th>Cortes reportados<\/th>/);
-  assert.match(src, /<dt>Cortes reportados<\/dt>/);
-  assert.equal(src.split("{branchCutCoverage(b.projection)}").length-1, 2);
-  assert.doesNotMatch(src, /\{b\.m\.sales\.known\}\/\{b\.count\}/);
+test("Branch performance renders missing cuts (0 green, 1+ red) in desktop and mobile", () => {
+  assert.match(src, /function branchMissingCuts\(projection\)/);
+  assert.match(src, /Math\.max\(0, projection\.cutoffDay - projection\.countedPairs\)/);
+  assert.match(src, /<th>Cortes faltantes<\/th>/);
+  assert.match(src, /<dt>Cortes faltantes<\/dt>/);
+  assert.equal(src.split("<MissingCuts projection={b.projection} />").length - 1, 2);
+  assert.match(src, /missing === 0 \? "zero" : "alert"/);
+  assert.match(src, /missing === null \? "unavailable"/);
+  assert.match(css, /\.lr15-missing-cuts--zero\{color:#146b38/);
+  assert.match(css, /\.lr15-missing-cuts--alert\{color:#9e2621/);
+  assert.doesNotMatch(src, /Cortes reportados/);
 });
-test("A 15-day branch reports 15/16 even if all existing cut amounts are valid", () => {
+test("Missing cuts are 1 for 15/16, 0 for 16/16, and unavailable without a global cutoff", () => {
   const date = day => "2026-11-" + String(day).padStart(2, "0");
   const row = (day, state = "APPROVED") => ({
     branch_id: "PONIENTE", date: date(day),
@@ -113,11 +117,17 @@ test("A 15-day branch reports 15/16 even if all existing cut amounts are valid",
   const partial = commercialProjection(fifteen, target, "2026-11", globalCutoff);
   assert.equal(partial.countedPairs, 15);
   assert.equal(partial.cutoffDay, 16);
+  const missing = (projection) => projection.cutoffDay === null ? null :
+    Math.max(0, projection.cutoffDay - projection.countedPairs);
+  assert.equal(missing(partial), 1);
   const full = commercialProjection([...fifteen, row(16,"PENDING_REVIEW")], target, "2026-11", globalCutoff);
   assert.equal(full.countedPairs, 16);
   assert.equal(full.cutoffDay, 16);
+  assert.equal(missing(full), 0);
   const duplicated = commercialProjection([...fifteen, row(15)], target, "2026-11", globalCutoff);
   assert.equal(duplicated.countedPairs, 15);
+  assert.equal(missing(duplicated), 1);
   const noCutoff = commercialProjection(fifteen, target, "2026-11", null);
   assert.equal(noCutoff.cutoffDay, null);
+  assert.equal(missing(noCutoff), null);
 });

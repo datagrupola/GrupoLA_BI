@@ -1078,9 +1078,20 @@ function CommercialComparison({ comparison, windows, loading, error, mode, onMod
   );
 }
 
-function branchCutCoverage(projection) {
-  return projection.cutoffDay === null ? "No disponible" :
-    projection.countedPairs + "/" + projection.cutoffDay;
+function branchMissingCuts(projection) {
+  return projection.cutoffDay === null ? null :
+    Math.max(0, projection.cutoffDay - projection.countedPairs);
+}
+function MissingCuts({ projection }) {
+  const missing = branchMissingCuts(projection);
+  const status = missing === null ? "unavailable" : missing === 0 ? "zero" : "alert";
+  return (
+    <span className={"lr15-missing-cuts lr15-missing-cuts--" + status}
+      aria-label={missing === null ? "Cortes faltantes no disponibles" :
+        missing + (missing === 1 ? " corte faltante" : " cortes faltantes")}>
+      {missing === null ? "No disponible" : missing}
+    </span>
+  );
 }
 function Branches({ data, selected, overall, month, globalCutoff }) {
   const groups = data.branches
@@ -1111,7 +1122,7 @@ function Branches({ data, selected, overall, month, globalCutoff }) {
               <th>Avance</th>
               <th>Faltante</th>
               <th>Participación</th>
-              <th>Cortes reportados</th>
+              <th>Cortes faltantes</th>
               <th>Tickets</th>
             </tr>
           </thead>
@@ -1147,7 +1158,7 @@ function Branches({ data, selected, overall, month, globalCutoff }) {
                   )}
                 </td>
                 <td>
-                  {branchCutCoverage(b.projection)}
+                  <MissingCuts projection={b.projection} />
                 </td>
                 <td>{number(b.m.tickets.value)}</td>
               </tr>
@@ -1175,7 +1186,7 @@ function Branches({ data, selected, overall, month, globalCutoff }) {
                 <div><dt>Avance actual</dt><dd>{percent(b.m.fullNet, b.m.target)}</dd></div>
                 <div><dt>Faltante</dt><dd>{money(b.m.remaining)}</dd></div>
                 <div><dt>Participación</dt><dd>{percent(overall.complete ? b.m.fullNet : null, overall.fullNet)}</dd></div>
-                <div><dt>Cortes reportados</dt><dd>{branchCutCoverage(b.projection)}</dd></div>
+                <div><dt>Cortes faltantes</dt><dd><MissingCuts projection={b.projection} /></dd></div>
                 <div><dt>Tickets</dt><dd>{number(b.m.tickets.value)}</dd></div>
               </dl>
             </details>
